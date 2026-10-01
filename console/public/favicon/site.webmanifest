@@ -1,0 +1,7 @@
+{
+    "name": "Technofay Transport Console",
+    "short_name": "Technofay",
+    "theme_color": "#ffffff",
+    "background_color": "#ffffff",
+    "display": "standalone"
+}

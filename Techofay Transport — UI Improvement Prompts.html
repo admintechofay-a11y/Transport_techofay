@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Techofay Transport — UI Improvement Prompts</title>
+<style>
+  :root {
+    --navy: #0F2D56;
+    --navy-light: #1A4080;
+    --saffron: #F97316;
+    --saffron-light: #FED7AA;
+    --emerald: #16A34A;
+    --slate-900: #0F172A;
+    --slate-800: #1E293B;
+    --slate-700: #334155;
+    --slate-600: #475569;
+    --slate-500: #64748B;
+    --slate-400: #94A3B8;
+    --slate-200: #E2E8F0;
+    --slate-100: #F1F5F9;
+    --slate-50: #F8FAFC;
+    --white: #fff;
+    --red: #DC2626;
+    --amber: #D97706;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--slate-50);
+    color: var(--slate-800);
+    line-height: 1.6;
+    padding: 0 0 60px;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, var(--navy) 0%, #163866 60%, #0A1F3B 100%);
+    color: white;
+    padding: 40px 32px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: var(--saffron);
+    opacity: 0.07;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--saffron-light);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .header h1 {
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: white;
+    margin-bottom: 8px;
+  }
+  .header p {
+    font-size: 14px;
+    color: rgba(255,255,255,0.65);
+    max-width: 640px;
+  }
+  .header-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .meta-chip {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+  }
+  .meta-chip span { color: var(--saffron-light); }
+
+  /* BODY */
+  .container { max-width: 960px; margin: 0 auto; padding: 40px 24px 0; }
+
+  /* SECTION */
+  .section { margin-bottom: 48px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--slate-200);
+  }
+  .section-num {
+    width: 32px; height: 32px;
+    background: var(--navy);
+    color: white;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--slate-900);
+    letter-spacing: -0.01em;
+  }
+  .section-sub {
+    font-size: 12px;
+    color: var(--slate-500);
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  .tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-left: auto;
+  }
+  .tag-file { background: #EFF6FF; color: #1D4ED8; }
+  .tag-new { background: #DCFCE7; color: #15803D; }
+  .tag-ux { background: #FEF3C7; color: #92400E; }
+  .tag-perf { background: #F5F3FF; color: #6D28D9; }
+
+  /* PROMPT BOX */
+  .prompt-box {
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(15,23,42,0.05);
+    transition: box-shadow 0.2s;
+  }
+  .prompt-box:hover { box-shadow: 0 4px 12px rgba(15,23,42,0.1); }
+  .prompt-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: var(--slate-50);
+    border-bottom: 1px solid var(--slate-200);
+    cursor: pointer;
+    user-select: none;
+  }
+  .prompt-icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .icon-blue { background: #EFF6FF; }
+  .icon-orange { background: #FFF7ED; }
+  .icon-green { background: #DCFCE7; }
+  .icon-purple { background: #F5F3FF; }
+  .icon-red { background: #FEF2F2; }
+  .icon-teal { background: #F0FDFA; }
+
+  .prompt-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--slate-800);
+    flex: 1;
+  }
+  .prompt-label .file {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--slate-500);
+    font-family: monospace;
+    margin-left: 6px;
+  }
+  .priority {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .p-high { background: #FEE2E2; color: #991B1B; }
+  .p-med { background: #FEF3C7; color: #92400E; }
+  .p-low { background: #F0FDF4; color: #14532D; }
+
+  .prompt-body {
+    padding: 18px 18px 20px;
+  }
+  .prompt-text {
+    font-family: 'Georgia', serif;
+    font-size: 13.5px;
+    color: var(--slate-700);
+    line-height: 1.75;
+    white-space: pre-wrap;
+    background: #FAFBFF;
+    border: 1px solid #E0E7FF;
+    border-radius: 8px;
+    padding: 16px;
+    position: relative;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: var(--navy);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .prompt-text:hover .copy-btn { opacity: 1; }
+  .prompt-note {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--slate-500);
+    font-style: italic;
+    padding-left: 8px;
+    border-left: 3px solid var(--saffron);
+  }
+
+  /* HOME PAGE SECTION */
+  .homepage-box {
+    background: linear-gradient(135deg, #0F2D56 0%, #163866 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .homepage-box::before {
+    content: '🏠';
+    position: absolute;
+    right: 24px;
+    top: 24px;
+    font-size: 40px;
+    opacity: 0.15;
+  }
+  .homepage-box h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--saffron-light);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .homepage-box .hp-prompt {
+    font-family: 'Georgia', serif;
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: rgba(255,255,255,0.88);
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 16px;
+    white-space: pre-wrap;
+    position: relative;
+  }
+  .homepage-box .copy-btn {
+    opacity: 0;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+  .homepage-box .hp-prompt:hover .copy-btn { opacity: 1; }
+
+  /* STRUCTURE OVERVIEW */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .overview-card {
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .overview-card .oc-icon { font-size: 20px; margin-bottom: 6px; }
+  .overview-card .oc-label { font-size: 12px; font-weight: 700; color: var(--slate-700); }
+  .overview-card .oc-status {
+    font-size: 11px;
+    color: var(--slate-500);
+    margin-top: 3px;
+  }
+  .status-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .dot-ok { background: var(--emerald); }
+  .dot-warn { background: var(--amber); }
+  .dot-bad { background: var(--red); }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--slate-200); margin: 40px 0; }
+
+  /* COPY ALL */
+  .copy-all-bar {
+    background: var(--navy);
+    color: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .copy-all-bar p { font-size: 13px; color: rgba(255,255,255,0.75); }
+  .copy-all-bar strong { color: white; font-weight: 800; }
+  .copy-all-btn {
+    background: var(--saffron);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .copy-all-btn:hover { background: #EA580C; }
+
+  @media (max-width: 600px) {
+    .header { padding: 28px 20px; }
+    .header h1 { font-size: 20px; }
+    .container { padding: 24px 16px 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-badge">🚛 Transport Techofay — UI Audit Report</div>
+  <h1>UI Improvement Prompts + Home Page</h1>
+  <p>Full scan of <code>frontend/src</code> — React + TypeScript + Tailwind + Vite. 12 targeted prompts ready to paste into Claude.</p>
+  <div class="header-meta">
+    <div class="meta-chip">Stack: <span>React 18 + Tailwind + Zustand + React Query</span></div>
+    <div class="meta-chip">Pages: <span>15 routes</span></div>
+    <div class="meta-chip">Theme: <span>Navy #0F2D56 + Saffron #F97316</span></div>
+    <div class="meta-chip">Brand: <span>TECHOFAY GLOBAL VENTURES</span></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- SCAN OVERVIEW -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">📋</div>
+      <div>
+        <div class="section-title">What Was Scanned</div>
+        <div class="section-sub">Every file in frontend/src — layout, pages, components, stores, hooks, CSS</div>
+      </div>
+    </div>
+
+    <div class="overview-grid">
+      <div class="overview-card">
+        <div class="oc-icon">🧭</div>
+        <div class="oc-label">Sidebar (Sidebar.tsx)</div>
+        <div class="oc-status"><span class="status-dot dot-warn"></span>Good structure, but no Home page route</div>
+      </div>
+      <div class="overview-card">
+        <div class="oc-icon">📊</div>
+        <div class="oc-label">Dashboard (pages/dashboard)</div>
+        <div class="oc-status"><span class="status-dot dot-warn"></span>Heavy banner, no hero/landing before login</div>
+      </div>
+      <div class="overview-card">
+        <div class="oc-icon">🔐</div>
+        <div class="oc-label">Login (pages/auth/Login.tsx)</div>
+        <div class="oc-status"><span class="status-dot dot-warn"></span>Form exists, but no public marketing landing</div>
+      </div>
+      <div class="overview-card">
+        <div class="oc-icon">🎨</div>
+        <div class="oc-label">KpiCard (components/dashboard)</div>
+        <div class="oc-status"><span class="status-dot dot-ok"></span>Clean, but lacks trend indicator</div>
+      </div>
+      <div class="overview-card">
+        <div class="oc-icon">🖥</div>
+        <div class="oc-label">TopBar (layout/TopBar.tsx)</div>
+        <div class="oc-status"><span class="status-dot dot-ok"></span>Good, dark mode toggle exists</div>
+      </div>
+      <div class="overview-card">
+        <div class="oc-icon">🗂</div>
+        <div class="oc-label">All List Pages (15 pages)</div>
+        <div class="oc-status"><span class="status-dot dot-warn"></span>Inconsistent empty states</div>
+      </div>
+      <div class="overview-card">
+        <div class="oc-icon">📱</div>
+        <div class="oc-label">Mobile Responsiveness</div>
+        <div class="oc-status"><span class="status-dot dot-bad"></span>Sidebar collapses but tables overflow</div>
+      </div>
+      <div class="overview-card">
+        <div class="oc-icon">🎯</div>
+        <div class="oc-label">CSS Variables (index.css)</div>
+        <div class="oc-status"><span class="status-dot dot-ok"></span>Well-defined Navy + Saffron theme</div>
+      </div>
+      <div class="overview-card">
+        <div class="oc-icon">📄</div>
+        <div class="oc-label">HeroAdmissionBanner</div>
+        <div class="oc-status"><span class="status-dot dot-warn"></span>Too much info, visually dense</div>
+      </div>
+      <div class="overview-card">
+        <div class="oc-icon">🚨</div>
+        <div class="oc-label">Home Page (Public)</div>
+        <div class="oc-status"><span class="status-dot dot-bad"></span>Does NOT exist — needs to be created</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 1: HOME PAGE PROMPT -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num" style="background:#F97316">🏠</div>
+      <div>
+        <div class="section-title">NEW HOME PAGE — Create from Scratch</div>
+        <div class="section-sub">Public landing page before login — does not exist in the repo at all</div>
+      </div>
+      <span class="tag tag-new">NEW FILE</span>
+    </div>
+
+    <div class="homepage-box">
+      <h3>📝 Full Home Page Creation Prompt — Paste this into Claude</h3>
+      <div class="hp-prompt" id="home-prompt">
+Create a new public Home page for a transport/logistics SaaS called <strong>Techofay Global Ventures</strong>. The app is built with React 18 + TypeScript + Tailwind CSS + React Router.
+
+Create the file: <code>frontend/src/pages/home/HomePage.tsx</code>
+
+Add the route in <code>App.tsx</code> — add <code>&lt;Route path="/home" element={&lt;HomePage /&gt;} /&gt;</code> outside the ProtectedRoute and make the root "/" redirect to "/home" instead of dashboard when unauthenticated.
+
+<strong>Theme / Colors to use (from index.css CSS variables):</strong>
+- Primary Navy: #0F2D56 (dark blue)
+- Accent Saffron: #F97316 (orange)
+- Tailwind custom colors: navy-800, navy-950, saffron-400, saffron-500
+- Font: Inter (already loaded via Google Fonts)
+
+<strong>Home Page must have these 6 sections:</strong>
+
+1. <strong>NAVBAR</strong> — Sticky top navbar with:
+   - Left: Techofay logo (img src="/techofay-logo.png", fallback to "T" letter badge in navy) + "TECHOFAY GLOBAL VENTURES" text in amber-300
+   - Right: "Login" button → navigates to /login, "Get Started" button → navigates to /login
+   - Transparent on top, white with border after scroll (use useEffect + scroll listener)
+
+2. <strong>HERO SECTION</strong> — Full-width dark navy gradient background (from-[#0F2D56] via-[#163866] to-[#091D38]) with:
+   - Big badge: "🚛 India's Smart Transport Management Platform"
+   - H1: "Fleet Operations. Freight Dispatch. One Console." — text-5xl font-black text-white
+   - Subtext (2 lines): "From LR generation to POD verification, manage your entire road freight operation in real time. Built for Indian trucking businesses."
+   - Two CTA buttons: "Start Free →" (saffron/orange) and "View Live Demo" (white outline)
+   - Background: subtle animated pulse circles using CSS animation (opacity-5 navy-blue circles)
+   - Stats row below CTA: "500+ Vehicles Tracked • 10,000+ LRs Generated • ₹50Cr+ Freight Managed • 99.9% Uptime"
+
+3. <strong>FEATURES GRID</strong> — White background section, heading "Everything Your Transport Business Needs":
+   - 3-column grid (1 col on mobile) of 9 feature cards
+   - Each card has: colored icon (Lucide icons), title, 1-line description
+   - Features list:
+     * 📦 Load Management — Create and track consignments end-to-end
+     * 🧾 LR & Bilty Generation — Statutory 4-copy bilty with GST SAC 9965
+     * 🚛 Fleet Management — Track vehicles, fitness, insurance & permits
+     * 👤 Driver Management — License tracking & duty assignment
+     * 💰 Freight Billing — Automated freight charges & customer statements
+     * 📋 Delivery Challans — Material acknowledgment and dispatch records
+     * 🔒 Gate Passes — Entry/exit pass management
+     * 📸 POD Management — Digital Proof of Delivery upload & verification
+     * 📊 Analytics & Reports — Route performance, revenue & compliance reports
+
+4. <strong>HOW IT WORKS</strong> — Light gray background, 4-step horizontal process:
+   - Step 1: Create Load → Step 2: Assign Vehicle & Driver → Step 3: Generate LR / Bilty → Step 4: Verify POD & Close
+   - Connected by arrows, numbered navy circles
+   - Below steps: "All steps in one platform. No spreadsheets needed."
+
+5. <strong>COMPANY INFO STRIP</strong> — Navy background, shows:
+   - Company name, address: "Golden Chokdi, Vadodara, Gujarat 390024"
+   - Phone: "+91 93593 39000 / 93776 10333"
+   - Email: "info@techofay.com"
+   - PAN: shown as a monospace badge
+   - "Powered by Techofay Global Ventures" with shield icon
+
+6. <strong>FOOTER CTA</strong> — Saffron/orange gradient, big text "Ready to Modernize Your Transport Business?", button "Get Started Free" → /login
+
+Export as: <code>export const HomePage: React.FC = () => { ... }</code>
+
+Use only Tailwind utility classes. Use Lucide React icons (already installed: Truck, Package, FileText, Users, IndianRupee, ClipboardCheck, ShieldCheck, Camera, BarChart3, MapPin, Phone, Mail, ArrowRight, CheckCircle2, Star). No external dependencies needed. Keep it performant — no lazy loading needed.
+      <button class="copy-btn" onclick="copyText('home-prompt')">COPY</button></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 2: UI IMPROVEMENT PROMPTS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">🎨</div>
+      <div>
+        <div class="section-title">UI Improvement Prompts</div>
+        <div class="section-sub">One prompt per issue — paste directly into Claude with your code</div>
+      </div>
+    </div>
+
+    <!-- PROMPT 1 -->
+    <div class="prompt-box">
+      <div class="prompt-header">
+        <div class="prompt-icon icon-blue">🧭</div>
+        <div class="prompt-label">Sidebar — Active State + Group Labels Refinement <span class="file">Sidebar.tsx</span></div>
+        <span class="priority p-med">MEDIUM</span>
+      </div>
+      <div class="prompt-body">
+        <div class="prompt-text" id="p1">
+Improve the Sidebar component in `frontend/src/components/layout/Sidebar.tsx`.
+
+Current issues:
+- Group labels (OPERATIONS, FLEET, etc.) are plain uppercase text with no visual separator from nav items
+- Active nav item is hard to distinguish on dark navy sidebar
+- No hover animation — transition is there but no translateX effect
+- Badge numbers overlap with label on collapsed mode
+
+Fix these:
+1. Active item: add a left accent bar (3px wide, saffron color) + bg-white/15 + font-bold white text. Remove current active class and replace with this pattern.
+2. Group labels: add a 1px horizontal rule (border-white/10) above each group title (except the first), and reduce the label font to `text-[9px]` with `tracking-[0.12em]`.
+3. Hover: add `hover:translate-x-0.5` and `hover:bg-white/10` to each nav link.
+4. Collapsed mode badge: when `sidebarCollapsed` is true, hide the badge text entirely (already has this partially — make sure no overflow occurs).
+5. Add a subtle gradient at the bottom of the sidebar scroll area: `from-transparent to-[#091D38]` 40px tall fixed overlay.
+
+Keep all existing functionality. Do not change navGroups array or router logic.
+        <button class="copy-btn" onclick="copyText('p1')">COPY</button></div>
+        <div class="prompt-note">File: Sidebar.tsx — visual polish only, no logic changes</div>
+      </div>
+    </div>
+
+    <!-- PROMPT 2 -->
+    <div class="prompt-box">
+      <div class="prompt-header">
+        <div class="prompt-icon icon-orange">📊</div>
+        <div class="prompt-label">KpiCard — Add Trend Arrow + Pulse Animation <span class="file">KpiCard.tsx</span></div>
+        <span class="priority p-med">MEDIUM</span>
+      </div>
+      <div class="prompt-body">
+        <div class="prompt-text" id="p2">
+Improve `frontend/src/components/dashboard/KpiCard.tsx`.
+
+Add these enhancements:
+1. Add optional prop `trend?: 'up' | 'down' | 'neutral'` and `trendValue?: string` (e.g. "+12%").
+2. If trend is provided, show a small trend badge below the value:
+   - `up`: green arrow (TrendingUp icon from lucide), text-emerald-600, bg-emerald-50
+   - `down`: red arrow (TrendingDown icon), text-red-600, bg-red-50  
+   - `neutral`: gray dash, text-slate-400
+3. Add a subtle shimmer loading state: when `isLoading` prop is true (add `isLoading?: boolean`), show a skeleton pulse animation using `animate-pulse` on the value and subtext areas.
+4. Make the icon container slightly larger (p-3.5 instead of p-3) and add a soft drop-shadow: `shadow-sm` on the icon wrapper.
+5. Add `group` class to the outer div and `group-hover:scale-105 transition-transform` to the icon div for a subtle icon zoom on hover.
+
+All props are optional and backward-compatible. The KpiCard interface already has onClick, variant, badge — do not remove any.
+        <button class="copy-btn" onclick="copyText('p2')">COPY</button></div>
+        <div class="prompt-note">File: KpiCard.tsx — props are backward-compatible, no breaking changes</div>
+      </div>
+    </div>
+
+    <!-- PROMPT 3 -->
+    <div class="prompt-box">
+      <div class="prompt-header">
+        <div class="prompt-icon icon-orange">🖥</div>
+        <div class="prompt-label">HeroAdmissionBanner — Reduce Visual Clutter <span class="file">HeroAdmissionBanner.tsx</span></div>
+        <span class="priority p-high">HIGH</span>
+      </div>
+      <div class="prompt-body">
+        <div class="prompt-text" id="p3">
+Refactor `frontend/src/components/shared/HeroAdmissionBanner.tsx` to reduce visual clutter.
+
+Current problem: The banner shows company name badge, fleet badge, 24/7 badge, a huge H1, 2-line subtext, 4 contact info items (address, 2 phones, email, PAN), and 3 action buttons — all at once. It's overwhelming.
+
+Slim it down to this layout:
+1. LEFT side (max-w-lg):
+   - Single line: Techofay logo image + "Fleet Operations Console" text (font-bold, text-white, text-lg)
+   - One subtext line only: "Heavy Road Haulage • Booking Slips • Lorry Trip Memos • 4-Copy Bilties (GST SAC 9965)" — text-slate-300, text-xs
+   - Contact strip: keep only PHONE and EMAIL (remove address and PAN from banner — they can go in footer/settings)
+
+2. RIGHT side: keep only 2 buttons:
+   - "New Consignment" (primary saffron button, with Plus icon)  
+   - A dropdown-style button for "Templates" that shows Loading Slip + Trip Memo options (use a relative div with absolute dropdown on click, state: showTemplates)
+
+3. Reduce banner min-height: remove any fixed height, let it be `py-5` (was py-6, reduce padding)
+
+4. The gradient background stays the same (from-[#0F2D56] via-[#163866] to-[#0A1F3B]).
+
+Keep QuickAdmissionModal integration intact. Keep all download functions working.
+        <button class="copy-btn" onclick="copyText('p3')">COPY</button></div>
+        <div class="prompt-note">File: HeroAdmissionBanner.tsx — reduces info overload on dashboard</div>
+      </div>
+    </div>
+
+    <!-- PROMPT 4 -->
+    <div class="prompt-box">
+      <div class="prompt-header">
+        <div class="prompt-icon icon-green">📱</div>
+        <div class="prompt-label">Mobile: Fix Horizontal Table Overflow on All List Pages <span class="file">All pages/*/index.tsx</span></div>
+        <span class="priority p-high">HIGH</span>
+      </div>
+      <div class="prompt-body">
+        <div class="prompt-text" id="p4">
+Fix mobile table overflow issue that exists in every list page (loads, drivers, vehicles, customers, freight, bilties, lr-numbers, delivery-challans, gate-passes, pod).
+
+Pattern fix — apply this to every page that has a table:
+
+1. Wrap every `<table>` in a div with these exact classes:
+   `<div className="overflow-x-auto -mx-1 rounded-xl border border-slate-200">`
+   and remove `border` from the table itself if present.
+
+2. On each table, add `className="w-full min-w-[640px] text-left text-xs"` — the min-w forces horizontal scroll instead of breaking layout.
+
+3. On mobile (screens < sm), hide low-priority columns by adding `hidden sm:table-cell` to these column headers and their `<td>` counterparts:
+   - In Drivers page: hide "License Expiry" column on mobile  
+   - In Vehicles page: hide "Insurance Expiry" column on mobile
+   - In Loads page: hide "Driver" column on mobile
+   - In Freight page: hide "GSTIN" column on mobile
+
+4. In AppShell.tsx `<main>` tag, change `p-6 lg:p-8` to `p-4 sm:p-6 lg:p-8` for tighter mobile padding.
+
+Do all 4 steps in one pass. Show me the updated AppShell.tsx and 3 example pages (Loads, Drivers, Vehicles) with the fix applied so I can replicate the pattern for the rest.
+        <button class="copy-btn" onclick="copyText('p4')">COPY</button></div>
+        <div class="prompt-note">Critical UX fix — tables currently break layout on mobile/tablet viewports</div>
+      </div>
+    </div>
+
+    <!-- PROMPT 5 -->
+    <div class="prompt-box">
+      <div class="prompt-header">
+        <div class="prompt-icon icon-purple">🔐</div>
+        <div class="prompt-label">Login Page — Visual Upgrade + Branding Polish <span class="file">pages/auth/Login.tsx</span></div>
+        <span class="priority p-med">MEDIUM</span>
+      </div>
+      <div class="prompt-body">
+        <div class="prompt-text" id="p5">
+Improve the visual design of `frontend/src/pages/auth/Login.tsx` (keep all logic/auth flow identical).
+
+Visual upgrades only:
+1. Add a left-panel split layout for screens ≥ lg:
+   - Left half (hidden on mobile): dark navy panel with a transport/logistics illustration using SVG or CSS art — a simple truck silhouette with road, or just a branded dark panel with company stats ("500+ Fleets • 10,000+ LRs • ₹50Cr+ Freight") in white text on navy
+   - Right half: the existing login form (centered)
+   - On mobile: full screen navy background (existing behavior)
+
+2. The logo badge at top: make it slightly larger (h-14, was h-10), add a faint saffron glow: `shadow-[0_0_20px_rgba(249,115,22,0.3)]`
+
+3. The form card: change from flat to a card with `shadow-2xl shadow-black/30 backdrop-blur-sm bg-white/95` — gives glass effect on dark background
+
+4. Input focus ring: add `focus:ring-2 focus:ring-saffron-500 focus:border-saffron-500` to email and password inputs
+
+5. "Demo Login" button: style it as a secondary outlined button with a play icon (Play from lucide) instead of generic button
+
+6. Add a subtle animated background: 3 slow-moving blurred circles in the background (CSS keyframe animation, `@keyframes float` with translateY), colors: navy/10, saffron/5, white/5
+
+Keep all existing state (authMode, showPassword, isLoading, register forms) completely intact.
+        <button class="copy-btn" onclick="copyText('p5')">COPY</button></div>
+        <div class="prompt-note">File: Login.tsx — visual redesign only, zero logic changes</div>
+      </div>
+    </div>
+
+    <!-- PROMPT 6 -->
+    <div class="prompt-box">
+      <div class="prompt-header">
+        <div class="prompt-icon icon-teal">🔔</div>
+        <div class="prompt-label">TopBar — Notifications Dropdown + Breadcrumb <span class="file">layout/TopBar.tsx</span></div>
+        <span class="priority p-low">LOW</span>
+      </div>
+      <div class="prompt-body">
+        <div class="prompt-text" id="p6">
+Improve `frontend/src/components/layout/TopBar.tsx`:
+
+1. Add a breadcrumb below the page title (only shows when not on /dashboard):
+   - Shows: Home > [Page Name] — clickable Home navigates to /dashboard
+   - Style: `text-[11px] text-slate-400 flex items-center gap-1.5` with ChevronRight icon (size 3)
+   - Only render on pages other than dashboard
+
+2. Notifications bell dropdown (currently `notificationsOpen` state exists but no dropdown rendered):
+   - When bell is clicked and `notificationsOpen` is true, render a dropdown panel (absolute positioned, right-0, top-12, w-80, bg-white, rounded-xl, shadow-xl, border border-slate-200, z-50)
+   - Show 3 hardcoded mock notification items from `metrics`:
+     * If `metrics?.expiring_documents > 0`: "⚠️ {n} documents expiring soon" in amber
+     * If `metrics?.pending_pods > 0`: "📸 {n} PODs pending verification" in blue
+     * If `metrics?.outstanding_balance > 0`: "💰 Outstanding balance due" in red
+   - Each row: flex, icon, text, timestamp "Just now", clickable → navigates to relevant page
+   - Footer of dropdown: "View all alerts →" link to /reports
+   - Add click-outside listener using useRef + useEffect to close dropdown
+
+3. Company badge (hidden on < lg): shorten to just show initials "TGV" in a navy circle badge instead of full company name, saving space.
+
+Keep all existing imports, useUIStore, useAuthStore, useDashboardMetrics intact.
+        <button class="copy-btn" onclick="copyText('p6')">COPY</button></div>
+        <div class="prompt-note">File: TopBar.tsx — adds useful notification UX</div>
+      </div>
+    </div>
+
+    <!-- PROMPT 7 -->
+    <div class="prompt-box">
+      <div class="prompt-header">
+        <div class="prompt-icon icon-blue">📭</div>
+        <div class="prompt-label">Empty States — Consistent Design Across All Pages <span class="file">All pages</span></div>
+        <span class="priority p-med">MEDIUM</span>
+      </div>
+      <div class="prompt-body">
+        <div class="prompt-text" id="p7">
+Create a shared `EmptyState` component and apply it consistently across all list pages.
+
+1. Create file: `frontend/src/components/shared/EmptyState.tsx`
+
+```tsx
+interface EmptyStateProps {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}
+```
+
+Design:
+- Centered vertically and horizontally in a container
+- Icon: rendered in a large circle (w-16 h-16, bg-slate-100, rounded-full, text-slate-400)
+- Title: `text-base font-bold text-slate-700`
+- Description: `text-sm text-slate-400 max-w-xs text-center mt-1`
+- Optional CTA button in saffron: shows only if `actionLabel` and `onAction` are provided
+- Wrap in: `<div className="flex flex-col items-center justify-center py-20 px-8 text-center">`
+
+2. Replace all existing empty state inline code in these pages with the new component:
+   - pages/loads/index.tsx — use Package icon, "No Loads Found", "Create your first consignment to get started"
+   - pages/drivers/index.tsx — use UserCheck icon, "No Drivers", "Add commercial drivers to your fleet roster"
+   - pages/vehicles/index.tsx — use Truck icon, "No Vehicles", "Register your fleet vehicles to begin tracking"
+   - pages/customers/index.tsx — use Building2 icon, "No Customers", "Add consignors and consignees to your directory"
+
+Show me EmptyState.tsx and then the updated loads/index.tsx as a reference. I will apply the pattern to the rest.
+        <button class="copy-btn" onclick="copyText('p7')">COPY</button></div>
+        <div class="prompt-note">Creates shared component — apply pattern to all 15 pages</div>
+      </div>
+    </div>
+
+    <!-- PROMPT 8 -->
+    <div class="prompt-box">
+      <div class="prompt-header">
+        <div class="prompt-icon icon-orange">🎨</div>
+        <div class="prompt-label">Dashboard — Add Quick Actions Floating Button (FAB) <span class="file">pages/dashboard/index.tsx</span></div>
+        <span class="priority p-med">MEDIUM</span>
+      </div>
+      <div class="prompt-body">
+        <div class="prompt-text" id="p8">
+Add a Floating Action Button (FAB) to `frontend/src/pages/dashboard/index.tsx` for quick access to common actions.
+
+Implementation:
+1. Add a state: `const [fabOpen, setFabOpen] = useState(false)`
+
+2. Render a fixed FAB at bottom-right (fixed, bottom-6, right-6, z-50):
+   - Main button: circular, w-14 h-14, bg-saffron-500 (orange), shadow-xl, rounded-full
+   - Icon: Plus from lucide, rotates 45deg when fabOpen (transition-transform, duration-300)
+   - On hover: scale-110, bg-saffron-600
+
+3. When `fabOpen` is true, show 4 action pills above the main button (animate upward with translate-y, opacity transition):
+   - "New Load" → navigate('/loads') — Package icon
+   - "Add Vehicle" → navigate('/vehicles') — Truck icon
+   - "Add Driver" → navigate('/drivers') — UserCheck icon
+   - "New LR" → navigate('/lr-numbers') — FileText icon
+   - Each pill: flex-row-reverse, label on left (text-xs, bg-white, shadow-md, rounded-full, px-3 py-1.5), icon circle button (saffron, w-10 h-10) on right
+   - Stagger animation: use `style={{ transitionDelay: `${index * 50}ms` }}`
+
+4. Click-outside closes FAB: wrap in a ref + useEffect with mousedown listener
+
+5. On mobile only (sm:hidden on desktop): also show this FAB, as it's the primary way to create records on small screens.
+
+Keep all existing dashboard content intact. Add FAB at the very end of the JSX return, outside the space-y-6 div, as a sibling.
+        <button class="copy-btn" onclick="copyText('p8')">COPY</button></div>
+        <div class="prompt-note">FAB dramatically improves mobile UX for quick record creation</div>
+      </div>
+    </div>
+
+    <!-- PROMPT 9 -->
+    <div class="prompt-box">
+      <div class="prompt-header">
+        <div class="prompt-icon icon-green">🌙</div>
+        <div class="prompt-label">Dark Mode — Fix Inconsistent White Backgrounds <span class="file">Multiple components</span></div>
+        <span class="priority p-low">LOW</span>
+      </div>
+      <div class="prompt-body">
+        <div class="prompt-text" id="p9">
+Dark mode is partially implemented (darkMode toggle exists in ui.store.ts, TopBar has toggle) but many components have hardcoded `bg-white` instead of `dark:bg-slate-900`.
+
+Fix these specific components:
+
+1. `frontend/src/components/layout/TopBar.tsx`:
+   - `bg-white` → `bg-white dark:bg-slate-900`
+   - `border-gray-200` → `border-gray-200 dark:border-slate-700`
+   - `text-gray-900` → `text-gray-900 dark:text-white`
+
+2. `frontend/src/pages/dashboard/index.tsx` — the "Active Dispatch Stream" table card:
+   - Already has `dark:bg-slate-900` on the wrapper — check tbody rows: `hover:bg-slate-50` → `hover:bg-slate-50 dark:hover:bg-slate-800`
+   - Table header `text-slate-400` border: `border-slate-100 dark:border-slate-800` (already has this — verify it's consistent)
+
+3. All modal/dialog components in `components/loads/` and `components/shared/`:
+   - Find any `bg-white rounded-xl` without dark counterpart and add `dark:bg-slate-800 dark:border-slate-700`
+
+4. In `frontend/src/index.css`, ensure the dark class is being applied to `<html>` tag. Check `ui.store.ts` — the `toggleDarkMode` action should call `document.documentElement.classList.toggle('dark')`. If it doesn't, add that side effect.
+
+Show me:
+- The corrected ui.store.ts toggleDarkMode action
+- The corrected TopBar.tsx header element
+- One corrected modal component as a reference
+        <button class="copy-btn" onclick="copyText('p9')">COPY</button></div>
+        <div class="prompt-note">Fixes dark mode inconsistency — the toggle exists but doesn't fully work</div>
+      </div>
+    </div>
+
+    <!-- PROMPT 10 -->
+    <div class="prompt-box">
+      <div class="prompt-header">
+        <div class="prompt-icon icon-purple">⚡</div>
+        <div class="prompt-label">Page Transition Animation — Add Smooth Route Changes <span class="file">AppShell.tsx</span></div>
+        <span class="priority p-low">LOW</span>
+      </div>
+      <div class="prompt-body">
+        <div class="prompt-text" id="p10">
+Add smooth page transition animation when navigating between routes in `frontend/src/components/layout/AppShell.tsx`.
+
+Implementation using CSS only (no framer-motion needed):
+
+1. In `frontend/src/index.css`, add these utility classes:
+```css
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: fadeSlideIn 0.25s ease-out forwards;
+}
+```
+
+2. In `AppShell.tsx`, wrap `<Outlet />` with a div that has a key tied to the current route:
+```tsx
+import { useLocation } from 'react-router-dom';
+const location = useLocation();
+// ...
+<main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+  <div key={location.pathname} className="page-enter h-full">
+    <Outlet />
+  </div>
+</main>
+```
+
+3. The `key={location.pathname}` forces React to remount the wrapper div on each route change, triggering the CSS animation fresh each time.
+
+4. Also add a thin progress bar at the top during navigation (pure CSS, no library):
+   - On route change start: show a 3px saffron line at top (position: fixed, top 0, left 0, z-50) that animates width from 0% to 85% over 400ms
+   - On route settled: animate to 100% then fade out
+   - Add this as a separate `<RouteProgressBar />` component rendered in AppShell above `<TopBar />`
+
+Show me AppShell.tsx complete + the index.css additions + RouteProgressBar.tsx component.
+        <button class="copy-btn" onclick="copyText('p10')">COPY</button></div>
+        <div class="prompt-note">Pure CSS — no new dependencies, ~30 lines total</div>
+      </div>
+    </div>
+
+    <!-- PROMPT 11 -->
+    <div class="prompt-box">
+      <div class="prompt-header">
+        <div class="prompt-icon icon-red">🔴</div>
+        <div class="prompt-label">StatusBadge — Expand Variants + Add Animated Pulse <span class="file">shared/StatusBadge.tsx</span></div>
+        <span class="priority p-med">MEDIUM</span>
+      </div>
+      <div class="prompt-body">
+        <div class="prompt-text" id="p11">
+Improve `frontend/src/components/shared/StatusBadge.tsx`.
+
+Current issue: StatusBadge likely has limited variants. Improve it to:
+
+1. Support these status strings exactly (map them to colors):
+   - `'active'`, `'on_trip'` → emerald/green badge
+   - `'available'` → blue badge
+   - `'pending'`, `'generated'` → amber/yellow badge
+   - `'completed'`, `'verified'`, `'delivered'` → emerald green
+   - `'cancelled'`, `'rejected'` → red badge
+   - `'under_maintenance'`, `'maintenance'`, `'inactive'` → slate/gray badge
+   - `'issued'`, `'draft'` → purple badge
+   - `'overdue'`, `'expired'` → red with !important urgency dot
+
+2. Add an `animated?: boolean` prop — when true, add a ping animation dot before the text (like the standard Tailwind `animate-ping` pattern using relative/absolute divs). Only use animated for `'active'` and `'on_trip'` statuses.
+
+3. Ensure all badges have consistent height: `py-0.5 px-2.5 text-[11px] font-semibold rounded-full` — no variation in sizing.
+
+4. Add a `size?: 'sm' | 'md'` prop. 'sm' uses `text-[10px] px-2 py-0.5`, 'md' (default) uses current sizing.
+
+Show the full updated StatusBadge.tsx file.
+        <button class="copy-btn" onclick="copyText('p11')">COPY</button></div>
+        <div class="prompt-note">StatusBadge is used on every page — this change has highest visual impact per line of code</div>
+      </div>
+    </div>
+
+    <!-- PROMPT 12 -->
+    <div class="prompt-box">
+      <div class="prompt-header">
+        <div class="prompt-icon icon-teal">📋</div>
+        <div class="prompt-label">All Form Inputs — Consistent Style + Validation UI <span class="file">All pages with forms</span></div>
+        <span class="priority p-high">HIGH</span>
+      </div>
+      <div class="prompt-body">
+        <div class="prompt-text" id="p12">
+Standardize all form input styling across the app. Currently inputs have inconsistent styles across different pages and modals.
+
+1. Create a shared input component: `frontend/src/components/shared/Input.tsx`
+
+```tsx
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  hint?: string;
+  icon?: LucideIcon;
+}
+export const Input: React.FC<InputProps> = ({ label, error, hint, icon: Icon, className, ...props }) => (
+  <div className="space-y-1">
+    {label && <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{label}</label>}
+    <div className="relative">
+      {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />}
+      <input
+        className={`w-full rounded-xl border px-3.5 py-2.5 text-sm text-slate-900 bg-white placeholder:text-slate-400
+          ${Icon ? 'pl-9' : ''}
+          ${error ? 'border-red-400 focus:ring-red-400' : 'border-slate-300 focus:ring-saffron-500 focus:border-saffron-500'}
+          focus:outline-none focus:ring-2 focus:ring-offset-0 transition
+          dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder:text-slate-500
+          ${className || ''}`}
+        {...props}
+      />
+    </div>
+    {error && <p className="text-xs text-red-600 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{error}</p>}
+    {hint && !error && <p className="text-xs text-slate-400">{hint}</p>}
+  </div>
+);
+```
+
+2. Create `frontend/src/components/shared/Select.tsx` with same pattern for `<select>` elements.
+
+3. Apply the Input component in at least the QuickAdmissionModal (loads/QuickAdmissionModal.tsx) — replace raw `<input>` elements with `<Input>` component. Show me the first 5 fields updated.
+
+4. The shared Input component should be exported from `frontend/src/components/shared/index.ts` if that file exists, or create it with: `export { Input } from './Input'; export { Select } from './Select';`
+
+Show Input.tsx, Select.tsx, and the updated first 5 fields in QuickAdmissionModal.tsx.
+        <button class="copy-btn" onclick="copyText('p12')">COPY</button></div>
+        <div class="prompt-note">Foundation component — once created, apply to all 15 pages progressively</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- PRIORITY GUIDE -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">🗓</div>
+      <div>
+        <div class="section-title">Recommended Implementation Order</div>
+        <div class="section-sub">Do in this sequence for maximum visual impact</div>
+      </div>
+    </div>
+
+    <div style="display:grid;gap:12px;">
+      <div style="background:white;border:1px solid #E2E8F0;border-left:4px solid #DC2626;border-radius:12px;padding:16px 18px;">
+        <div style="font-size:12px;font-weight:800;color:#991B1B;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">🔴 Week 1 — Do First (High Impact, Bugs)</div>
+        <div style="font-size:13px;color:#334155;line-height:1.7;">
+          <strong>Prompt 4</strong> — Mobile table overflow fix (actual bug, breaks layout)<br>
+          <strong>Prompt 3</strong> — HeroAdmissionBanner declutter (visual overload on main screen)<br>
+          <strong>Prompt 12</strong> — Shared Input component (foundation for all forms)<br>
+          <strong>Home Page</strong> — Create HomePage.tsx (completely missing from app)
+        </div>
+      </div>
+      <div style="background:white;border:1px solid #E2E8F0;border-left:4px solid #D97706;border-radius:12px;padding:16px 18px;">
+        <div style="font-size:12px;font-weight:800;color:#92400E;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">🟡 Week 2 — Medium Priority (UX Improvements)</div>
+        <div style="font-size:13px;color:#334155;line-height:1.7;">
+          <strong>Prompt 11</strong> — StatusBadge variants (used everywhere, high leverage)<br>
+          <strong>Prompt 7</strong> — Consistent EmptyState component<br>
+          <strong>Prompt 2</strong> — KpiCard trend arrows + loading skeleton<br>
+          <strong>Prompt 1</strong> — Sidebar active state + group labels
+        </div>
+      </div>
+      <div style="background:white;border:1px solid #E2E8F0;border-left:4px solid #16A34A;border-radius:12px;padding:16px 18px;">
+        <div style="font-size:12px;font-weight:800;color:#14532D;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">🟢 Week 3 — Polish (Nice to Have)</div>
+        <div style="font-size:13px;color:#334155;line-height:1.7;">
+          <strong>Prompt 5</strong> — Login page split-panel redesign<br>
+          <strong>Prompt 8</strong> — Floating Action Button (FAB)<br>
+          <strong>Prompt 6</strong> — TopBar notifications dropdown<br>
+          <strong>Prompt 10</strong> — Page transition animations<br>
+          <strong>Prompt 9</strong> — Dark mode consistency fixes
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function copyText(id) {
+  const el = document.getElementById(id);
+  const text = el.innerText.replace('COPY','').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = el.querySelector('.copy-btn');
+    if (btn) { btn.textContent = 'COPIED ✓'; setTimeout(() => btn.textContent = 'COPY', 2000); }
+  });
+}
+</script>
+
+</body>
+</html>
