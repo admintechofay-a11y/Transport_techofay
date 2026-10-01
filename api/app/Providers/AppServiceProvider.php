@@ -58,14 +58,124 @@ class AppServiceProvider extends ServiceProvider
         try {
             $register = function ($pdo) {
                 if ($pdo && method_exists($pdo, 'sqliteCreateFunction')) {
+                    $decodePoint = function ($value): ?array {
+                        if (!is_string($value)) {
+                            return null;
+                        }
+                        if (preg_match('/POINT\s*\(\s*([+-]?\d+(?:\.\d+)?)\s+([+-]?\d+(?:\.\d+)?)\s*\)/i', $value, $m)) {
+                            return ['lng' => (float) $m[1], 'lat' => (float) $m[2]];
+                        }
+                        if (strlen($value) >= 21) {
+                            $parts = @unpack('Vsrid/Corder/Vtype/dlng/dlat', $value);
+                            if ($parts !== false && isset($parts['lng'], $parts['lat'])) {
+                                return ['lng' => (float) $parts['lng'], 'lat' => (float) $parts['lat']];
+                            }
+                        }
+                        return null;
+                    };
+
+                    $extractPolygons = function ($wkt): array {
+                        if (!is_string($wkt)) {
+                            return [];
+                        }
+                        $polys = [];
+                        if (preg_match_all('/\(\s*([0-9\.\,\s\-]+)\s*\)/', $wkt, $matches)) {
+                            foreach ($matches[1] as $ring) {
+                                $pairs = explode(',', trim($ring));
+                                $poly = [];
+                                foreach ($pairs as $pair) {
+                                    $coords = preg_split('/\s+/', trim($pair));
+                                    if (count($coords) >= 2) {
+                                        $poly[] = ['lng' => (float) $coords[0], 'lat' => (float) $coords[1]];
+                                    }
+                                }
+                                if (count($poly) >= 3) {
+                                    $polys[] = $poly;
+                                }
+                            }
+                        }
+                        return $polys;
+                    };
+
+                    $pointInPolygon = function (array $pt, array $ring): bool {
+                        $x = $pt['lng'];
+                        $y = $pt['lat'];
+                        $inside = false;
+                        $count = count($ring);
+                        for ($i = 0, $j = $count - 1; $i < $count; $j = $i++) {
+                            $xi = $ring[$i]['lng'];
+                            $yi = $ring[$i]['lat'];
+                            $xj = $ring[$j]['lng'];
+                            $yj = $ring[$j]['lat'];
+                            $intersect = (($yi > $y) !== ($yj > $y))
+                                && ($x < ($xj - $xi) * ($y - $yi) / (($yj - $yi) ?: 0.0000000001) + $xi);
+                            if ($intersect) {
+                                $inside = !$inside;
+                            }
+                        }
+                        return $inside;
+                    };
+
                     $pdo->sqliteCreateFunction('ST_GeomFromText', fn($wkt, $srid = null) => $wkt);
                     $pdo->sqliteCreateFunction('ST_PointFromText', fn($wkt, $srid = null) => $wkt);
                     $pdo->sqliteCreateFunction('ST_AsText', fn($geom) => $geom);
-                    $pdo->sqliteCreateFunction('ST_X', fn($geom) => 0);
-                    $pdo->sqliteCreateFunction('ST_Y', fn($geom) => 0);
-                    $pdo->sqliteCreateFunction('ST_Distance_Sphere', fn($a, $b) => 0);
-                    $pdo->sqliteCreateFunction('ST_Contains', fn($a, $b) => 1);
-                    $pdo->sqliteCreateFunction('ST_Within', fn($a, $b) => 1);
+                    $pdo->sqliteCreateFunction('ST_X', fn($geom) => ($decodePoint($geom)['lng'] ?? null));
+                    $pdo->sqliteCreateFunction('ST_Y', fn($geom) => ($decodePoint($geom)['lat'] ?? null));
+                    $pdo->sqliteCreateFunction('ST_Distance_Sphere', function ($a, $b) use ($decodePoint) {
+                        $from = $decodePoint($a);
+                        $to   = $decodePoint($b);
+                        if (!$from || !$to) {
+                            return null;
+                        }
+                        $earthRadius = 6370986; // metres (MySQL default)
+                        $latFrom     = deg2rad($from['lat']);
+                        $latTo       = deg2rad($to['lat']);
+                        $deltaLat    = $latTo - $latFrom;
+                        $deltaLng    = deg2rad($to['lng'] - $from['lng']);
+                        $h = sin($deltaLat / 2) ** 2 + cos($latFrom) * cos($latTo) * sin($deltaLng / 2) ** 2;
+                        return 2 * $earthRadius * asin(min(1.0, sqrt($h)));
+                    });
+                    $pdo->sqliteCreateFunction('ST_Contains', function ($polyWkt, $pointWkt) use ($decodePoint, $extractPolygons, $pointInPolygon) {
+                        $pt = $decodePoint($pointWkt);
+                        if (!$pt) {
+                            return 0;
+                        }
+                        $rings = $extractPolygons($polyWkt);
+                        foreach ($rings as $ring) {
+                            if ($pointInPolygon($pt, $ring)) {
+                                return 1;
+                            }
+                        }
+                        return 0;
+                    });
+                    $pdo->sqliteCreateFunction('ST_Within', function ($pointWkt, $polyWkt) use ($decodePoint, $extractPolygons, $pointInPolygon) {
+                        $pt = $decodePoint($pointWkt);
+                        if (!$pt) {
+                            return 0;
+                        }
+                        $rings = $extractPolygons($polyWkt);
+                        foreach ($rings as $ring) {
+                            if ($pointInPolygon($pt, $ring)) {
+                                return 1;
+                            }
+                        }
+                        return 0;
+                    });
+                    $pdo->sqliteCreateFunction('MBRContains', function ($polyWkt, $pointWkt) use ($decodePoint, $extractPolygons) {
+                        $pt = $decodePoint($pointWkt);
+                        if (!$pt) {
+                            return 0;
+                        }
+                        $rings = $extractPolygons($polyWkt);
+                        foreach ($rings as $ring) {
+                            $lngs = array_column($ring, 'lng');
+                            $lats = array_column($ring, 'lat');
+                            if ($pt['lng'] >= min($lngs) && $pt['lng'] <= max($lngs) && $pt['lat'] >= min($lats) && $pt['lat'] <= max($lats)) {
+                                return 1;
+                            }
+                        }
+                        return 0;
+                    });
                     $pdo->sqliteCreateFunction('DATE_FORMAT', function ($date, $format) {
                         if (!$date) return null;
                         $time = strtotime($date);
@@ -107,7 +217,7 @@ class AppServiceProvider extends ServiceProvider
                 if ($connection->getDriverName() === 'sqlite') {
                     $register($connection->getPdo());
                     try {
-                        $connection->getPdo()->exec('PRAGMA foreign_keys = OFF;');
+                        $connection->getPdo()->exec('PRAGMA foreign_keys = ON;');
                     } catch (\Throwable $e) {}
                     $connection->setSchemaGrammar(new class extends \Illuminate\Database\Schema\Grammars\SQLiteGrammar {
                         public function compileSpatialIndex(\Illuminate\Database\Schema\Blueprint $blueprint, \Illuminate\Support\Fluent $command)
