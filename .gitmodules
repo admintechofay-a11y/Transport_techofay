@@ -8,6 +8,7 @@
 	path = packages/core-api
 	url = git@github.com:fleetbase/core-api.git
 	branch = main
+	ignore = dirty
 [submodule "packages/ember-core"]
 	path = packages/ember-core
 	url = git@github.com:fleetbase/ember-core.git
