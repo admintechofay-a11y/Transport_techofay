@@ -19,7 +19,6 @@ import { FormSection } from '@/components/shared/FormSection';
 import { useVehicles } from '@/hooks/use-vehicles';
 import { useDrivers } from '@/hooks/use-drivers';
 import { useCreateLoad } from '@/hooks/use-loads';
-import { useTransportStore } from '@/stores/transport-data.store';
 import { formatINR } from '@/lib/utils/currency';
 import { toast } from 'sonner';
 
@@ -87,19 +86,14 @@ export const LoadFormModal: React.FC<LoadFormModalProps> = ({
   onSubmitSuccess,
 }) => {
   const createLoadMutation = useCreateLoad();
-  const storeVehicles = useTransportStore((s) => s.vehicles);
-  const storeDrivers = useTransportStore((s) => s.drivers);
-  const addLoad = useTransportStore((s) => s.addLoad);
-  const addBilty = useTransportStore((s) => s.addBilty);
-  const addLrNumber = useTransportStore((s) => s.addLrNumber);
 
   const { data: serverVehicles } = useVehicles();
   const { data: serverDrivers } = useDrivers();
-  const rawVehicles = Array.isArray(serverVehicles) ? serverVehicles : (serverVehicles as any)?.data;
-  const rawDrivers = Array.isArray(serverDrivers) ? serverDrivers : (serverDrivers as any)?.data;
+  const rawVehicles = Array.isArray(serverVehicles) ? serverVehicles : ((serverVehicles as any)?.vehicles || (serverVehicles as any)?.data || []);
+  const rawDrivers = Array.isArray(serverDrivers) ? serverDrivers : ((serverDrivers as any)?.drivers || (serverDrivers as any)?.data || []);
 
-  const availableVehicles = storeVehicles.length > 0 ? storeVehicles : (rawVehicles || []);
-  const availableDrivers = storeDrivers.length > 0 ? storeDrivers : (rawDrivers || []);
+  const availableVehicles = rawVehicles;
+  const availableDrivers = rawDrivers;
 
   const [activeStep, setActiveStep] = useState(1);
 

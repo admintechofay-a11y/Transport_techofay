@@ -11,11 +11,21 @@ return new class extends Migration {
         /**
          * Devices: rename columns WITHOUT doctrine/dbal (MySQL 8+).
          */
-        DB::statement('ALTER TABLE devices RENAME COLUMN device_name TO name');
-        DB::statement('ALTER TABLE devices RENAME COLUMN device_type TO type');
-        DB::statement('ALTER TABLE devices RENAME COLUMN device_location TO location');
-        DB::statement('ALTER TABLE devices RENAME COLUMN device_model TO model');
-        DB::statement('ALTER TABLE devices RENAME COLUMN device_provider TO provider');
+        if (Schema::hasColumn('devices', 'device_name') && !Schema::hasColumn('devices', 'name')) {
+            DB::statement('ALTER TABLE devices RENAME COLUMN device_name TO name');
+        }
+        if (Schema::hasColumn('devices', 'device_type') && !Schema::hasColumn('devices', 'type')) {
+            DB::statement('ALTER TABLE devices RENAME COLUMN device_type TO type');
+        }
+        if (Schema::hasColumn('devices', 'device_location') && !Schema::hasColumn('devices', 'location')) {
+            DB::statement('ALTER TABLE devices RENAME COLUMN device_location TO location');
+        }
+        if (Schema::hasColumn('devices', 'device_model') && !Schema::hasColumn('devices', 'model')) {
+            DB::statement('ALTER TABLE devices RENAME COLUMN device_model TO model');
+        }
+        if (Schema::hasColumn('devices', 'device_provider') && !Schema::hasColumn('devices', 'provider')) {
+            DB::statement('ALTER TABLE devices RENAME COLUMN device_provider TO provider');
+        }
 
         /**
          * Devices: add new scalar cols + spatial POINT (nullable first!).
@@ -31,12 +41,10 @@ return new class extends Migration {
         });
 
         // Backfill existing rows so NOT NULL will succeed
-        DB::statement('UPDATE devices SET last_position = ST_SRID(POINT(0, 0), 4326) WHERE last_position IS NULL');
-
-        // Make column NOT NULL (and optionally enforce SRID at column level)
-        // If you want to enforce SRID on the column itself, uncomment the SRID variant:
-        // DB::statement('ALTER TABLE devices MODIFY last_position POINT NOT NULL SRID 4326');
-        DB::statement('ALTER TABLE devices MODIFY last_position POINT NOT NULL');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('UPDATE devices SET last_position = ST_SRID(POINT(0, 0), 4326) WHERE last_position IS NULL');
+            DB::statement('ALTER TABLE devices MODIFY last_position POINT NOT NULL');
+        }
 
         // NOW add the spatial index (requires NOT NULL)
         Schema::table('devices', function (Blueprint $table) {
@@ -62,8 +70,10 @@ return new class extends Migration {
             $table->point('last_position')->nullable()->after('serial_number');
         });
 
-        DB::statement('UPDATE sensors SET last_position = ST_SRID(POINT(0, 0), 4326) WHERE last_position IS NULL');
-        DB::statement('ALTER TABLE sensors MODIFY last_position POINT NOT NULL');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('UPDATE sensors SET last_position = ST_SRID(POINT(0, 0), 4326) WHERE last_position IS NULL');
+            DB::statement('ALTER TABLE sensors MODIFY last_position POINT NOT NULL');
+        }
 
         Schema::table('sensors', function (Blueprint $table) {
             $table->spatialIndex('last_position', 'sensors_last_position_spx');

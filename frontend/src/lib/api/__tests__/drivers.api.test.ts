@@ -54,7 +54,13 @@ describe('driverApi', () => {
 
     const res = await driverApi.create(newDriverData);
 
-    expect(apiClient.post).toHaveBeenCalledWith('/drivers', newDriverData);
+    expect(apiClient.post).toHaveBeenCalledWith('/drivers', {
+      driver: {
+        ...newDriverData,
+        drivers_license_number: 'DL-2026-COMPLIANT',
+        driving_licence_number: 'DL-2026-COMPLIANT',
+      },
+    });
     expect(res.id).toBe(2);
     expect(res.name).toBe('Compliant Driver');
   });
@@ -66,7 +72,13 @@ describe('driverApi', () => {
 
     const res = await driverApi.update('2', { status: 'on_leave' });
 
-    expect(apiClient.put).toHaveBeenCalledWith('/drivers/2', { status: 'on_leave' });
+    expect(apiClient.put).toHaveBeenCalledWith('/drivers/2', {
+      driver: {
+        status: 'on_leave',
+        drivers_license_number: undefined,
+        driving_licence_number: undefined,
+      },
+    });
     expect(res.status).toBe('on_leave');
   });
 

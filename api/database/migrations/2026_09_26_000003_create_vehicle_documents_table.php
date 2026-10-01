@@ -34,6 +34,17 @@ return new class extends Migration {
                 $table->index(['company_uuid', 'document_type']);
                 $table->index(['vehicle_uuid', 'is_active']);
             });
+        } else {
+            Schema::table('vehicle_documents', function (Blueprint $table) {
+                if (!Schema::hasColumn('vehicle_documents', 'document_label')) $table->string('document_label', 255)->nullable();
+                if (!Schema::hasColumn('vehicle_documents', 'file_uuid')) $table->string('file_uuid', 191)->nullable();
+                if (!Schema::hasColumn('vehicle_documents', 'file_url')) $table->string('file_url', 500)->nullable();
+                if (!Schema::hasColumn('vehicle_documents', 'issued_date')) $table->date('issued_date')->nullable();
+                if (!Schema::hasColumn('vehicle_documents', 'issuing_authority')) $table->string('issuing_authority', 255)->nullable();
+                if (!Schema::hasColumn('vehicle_documents', 'document_number')) $table->string('document_number', 100)->nullable();
+                if (!Schema::hasColumn('vehicle_documents', 'notes')) $table->text('notes')->nullable();
+                if (!Schema::hasColumn('vehicle_documents', 'created_by_uuid')) $table->string('created_by_uuid', 191)->nullable();
+            });
         }
     }
 

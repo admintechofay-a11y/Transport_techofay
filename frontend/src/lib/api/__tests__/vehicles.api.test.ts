@@ -54,7 +54,7 @@ describe('vehicleApi', () => {
 
     const res = await vehicleApi.create(newVehicleData);
 
-    expect(apiClient.post).toHaveBeenCalledWith('/vehicles', newVehicleData);
+    expect(apiClient.post).toHaveBeenCalledWith('/vehicles', { vehicle: newVehicleData });
     expect(res.id).toBe(2);
     expect(res.plate_number).toBe('GJ 06 XX 9999');
   });
@@ -66,7 +66,7 @@ describe('vehicleApi', () => {
 
     const res = await vehicleApi.update('2', { status: 'maintenance' });
 
-    expect(apiClient.put).toHaveBeenCalledWith('/vehicles/2', { status: 'maintenance' });
+    expect(apiClient.put).toHaveBeenCalledWith('/vehicles/2', { vehicle: { status: 'maintenance' } });
     expect(res.status).toBe('maintenance');
   });
 

@@ -40,6 +40,23 @@ return new class extends Migration {
                 $table->index(['company_uuid', 'payment_terms']);
                 $table->index(['company_uuid', 'created_at']);
             });
+        } else {
+            Schema::table('bilties', function (Blueprint $table) {
+                if (!Schema::hasColumn('bilties', 'lr_uuid')) $table->string('lr_uuid', 191)->nullable()->index();
+                if (!Schema::hasColumn('bilties', 'load_uuid')) $table->string('load_uuid', 191)->nullable()->index();
+                if (!Schema::hasColumn('bilties', 'from_location')) $table->string('from_location', 500)->nullable();
+                if (!Schema::hasColumn('bilties', 'to_location')) $table->string('to_location', 500)->nullable();
+                if (!Schema::hasColumn('bilties', 'material_details')) $table->json('material_details')->nullable();
+                if (!Schema::hasColumn('bilties', 'total_weight')) $table->decimal('total_weight', 10, 2)->nullable();
+                if (!Schema::hasColumn('bilties', 'freight_amount')) $table->decimal('freight_amount', 12, 2)->default(0);
+                if (!Schema::hasColumn('bilties', 'advance_amount')) $table->decimal('advance_amount', 12, 2)->default(0);
+                if (!Schema::hasColumn('bilties', 'balance_amount')) $table->decimal('balance_amount', 12, 2)->default(0);
+                if (!Schema::hasColumn('bilties', 'payment_terms')) $table->string('payment_terms', 50)->default('to_pay');
+                if (!Schema::hasColumn('bilties', 'remarks')) $table->text('remarks')->nullable();
+                if (!Schema::hasColumn('bilties', 'authorized_by')) $table->string('authorized_by', 255)->nullable();
+                if (!Schema::hasColumn('bilties', 'meta')) $table->json('meta')->nullable();
+                if (!Schema::hasColumn('bilties', 'created_by_uuid')) $table->string('created_by_uuid', 191)->nullable();
+            });
         }
     }
 

@@ -58,33 +58,217 @@ class AppServiceProvider extends ServiceProvider
         try {
             $register = function ($pdo) {
                 if ($pdo && method_exists($pdo, 'sqliteCreateFunction')) {
-                    $pdo->sqliteCreateFunction('ST_GeomFromText', fn($wkt) => $wkt);
+                    $pdo->sqliteCreateFunction('ST_GeomFromText', fn($wkt, $srid = null) => $wkt);
+                    $pdo->sqliteCreateFunction('ST_PointFromText', fn($wkt, $srid = null) => $wkt);
                     $pdo->sqliteCreateFunction('ST_AsText', fn($geom) => $geom);
                     $pdo->sqliteCreateFunction('ST_X', fn($geom) => 0);
                     $pdo->sqliteCreateFunction('ST_Y', fn($geom) => 0);
                     $pdo->sqliteCreateFunction('ST_Distance_Sphere', fn($a, $b) => 0);
                     $pdo->sqliteCreateFunction('ST_Contains', fn($a, $b) => 1);
                     $pdo->sqliteCreateFunction('ST_Within', fn($a, $b) => 1);
+                    $pdo->sqliteCreateFunction('DATE_FORMAT', function ($date, $format) {
+                        if (!$date) return null;
+                        $time = strtotime($date);
+                        if ($time === false) return null;
+                        $phpFormat = str_replace(
+                            ['%Y', '%y', '%m', '%d', '%H', '%i', '%s', '%M', '%b', '%D'],
+                            ['Y',  'y',  'm',  'd',  'H',  'i',  's',  'F',  'M',  'jS'],
+                            $format
+                        );
+                        return date($phpFormat, $time);
+                    });
+                    $pdo->sqliteCreateFunction('NOW', fn() => date('Y-m-d H:i:s'));
+                    $pdo->sqliteCreateFunction('CONCAT', fn(...$args) => implode('', $args));
+                    $pdo->sqliteCreateFunction('UNIX_TIMESTAMP', fn($d = null) => $d ? strtotime($d) : time());
+                    $pdo->sqliteCreateFunction('UUID', fn() => (string) Str::uuid());
+                    $pdo->sqliteCreateFunction('JSON_UNQUOTE', fn($v) => is_string($v) ? trim($v, '"') : $v);
+                    $pdo->sqliteCreateFunction('SUBSTRING_INDEX', function ($str, $delim, $count) {
+                        if ($str === null || $delim === null || $count === null) {
+                            return null;
+                        }
+                        $delim = (string) $delim;
+                        if ($delim === '') {
+                            return '';
+                        }
+                        $parts = explode($delim, (string) $str);
+                        $count = (int) $count;
+                        if ($count === 0) {
+                            return '';
+                        }
+                        if ($count > 0) {
+                            return implode($delim, array_slice($parts, 0, $count));
+                        }
+                        return implode($delim, array_slice($parts, $count));
+                    });
                 }
             };
 
-            Event::listen(\Illuminate\Database\Events\ConnectionEstablished::class, function ($event) use ($register) {
-                if ($event->connection->getDriverName() === 'sqlite') {
-                    $register($event->connection->getPdo());
+            $setupConnection = function ($connection) use ($register) {
+                if ($connection->getDriverName() === 'sqlite') {
+                    $register($connection->getPdo());
+                    try {
+                        $connection->getPdo()->exec('PRAGMA foreign_keys = OFF;');
+                    } catch (\Throwable $e) {}
+                    $connection->setSchemaGrammar(new class extends \Illuminate\Database\Schema\Grammars\SQLiteGrammar {
+                        public function compileSpatialIndex(\Illuminate\Database\Schema\Blueprint $blueprint, \Illuminate\Support\Fluent $command)
+                        {
+                            return null;
+                        }
+
+                        public function wrapTable($table)
+                        {
+                            if ($this->isExpression($table)) {
+                                $val = (string) $this->getValue($table);
+                                if (str_contains($val, '.')) {
+                                    $parts = explode('.', $val);
+                                    $tableName = end($parts);
+                                    return parent::wrapTable($tableName);
+                                }
+                                return $val;
+                            }
+
+                            if (is_string($table) && str_contains($table, '.')) {
+                                $parts = explode('.', $table);
+                                $tableName = end($parts);
+                                return parent::wrapTable($tableName);
+                            }
+
+                            return parent::wrapTable($table);
+                        }
+
+                        public function compileCreate(\Illuminate\Database\Schema\Blueprint $blueprint, \Illuminate\Support\Fluent $command)
+                        {
+                            return sprintf('%s table if not exists %s (%s%s%s)',
+                                $blueprint->temporary ? 'create temporary' : 'create',
+                                $this->wrapTable($blueprint),
+                                implode(', ', $this->getColumns($blueprint)),
+                                (string) $this->addForeignKeys($blueprint),
+                                (string) $this->addPrimaryKeys($blueprint)
+                            );
+                        }
+
+                        public function compileUnique(\Illuminate\Database\Schema\Blueprint $blueprint, \Illuminate\Support\Fluent $command)
+                        {
+                            return sprintf('create unique index if not exists %s on %s (%s)',
+                                $this->wrap($command->index),
+                                $this->wrapTable($blueprint),
+                                $this->columnize($command->columns)
+                            );
+                        }
+
+                        public function compileIndex(\Illuminate\Database\Schema\Blueprint $blueprint, \Illuminate\Support\Fluent $command)
+                        {
+                            return sprintf('create index if not exists %s on %s (%s)',
+                                $this->wrap($command->index),
+                                $this->wrapTable($blueprint),
+                                $this->columnize($command->columns)
+                            );
+                        }
+
+                        public function compileDropIndex(\Illuminate\Database\Schema\Blueprint $blueprint, \Illuminate\Support\Fluent $command)
+                        {
+                            $index = $this->wrap($command->index);
+                            return "drop index if exists {$index}";
+                        }
+
+                        public function compileDropUnique(\Illuminate\Database\Schema\Blueprint $blueprint, \Illuminate\Support\Fluent $command)
+                        {
+                            $index = $this->wrap($command->index);
+                            return "drop index if exists {$index}";
+                        }
+
+                        public function compileDropSpatialIndex(\Illuminate\Database\Schema\Blueprint $blueprint, \Illuminate\Support\Fluent $command)
+                        {
+                            return null;
+                        }
+
+                        public function compileRenameColumn(\Illuminate\Database\Schema\Blueprint $blueprint, \Illuminate\Support\Fluent $command, \Illuminate\Database\Connection $connection)
+                        {
+                            $tableName = $this->wrapTable($blueprint);
+                            $cleanTableName = trim($tableName, '"\'`');
+                            $fromCol = trim($this->wrap($command->from), '"\'`');
+                            $toCol = trim($this->wrap($command->to), '"\'`');
+
+                            try {
+                                $pdo = $connection->getPdo();
+                                if ($pdo) {
+                                    $stmt = $pdo->query("PRAGMA table_info('{$cleanTableName}')");
+                                    if ($stmt) {
+                                        $cols = array_map(fn($c) => strtolower($c['name']), $stmt->fetchAll(\PDO::FETCH_ASSOC));
+                                        if (!in_array(strtolower($fromCol), $cols, true) || in_array(strtolower($toCol), $cols, true)) {
+                                            return null;
+                                        }
+                                    }
+                                }
+                            } catch (\Throwable $e) {}
+
+                            return $connection->usingNativeSchemaOperations()
+                                ? sprintf('alter table %s rename column %s to %s',
+                                    $this->wrapTable($blueprint),
+                                    $this->wrap($command->from),
+                                    $this->wrap($command->to)
+                                )
+                                : parent::compileRenameColumn($blueprint, $command, $connection);
+                        }
+
+                        public function compileAdd(\Illuminate\Database\Schema\Blueprint $blueprint, \Illuminate\Support\Fluent $command)
+                        {
+                            $tableName = $this->wrapTable($blueprint);
+                            $cleanTableName = trim($tableName, '"\'`');
+                            $existingCols = [];
+                            try {
+                                $pdo = \Illuminate\Support\Facades\DB::connection()->getPdo();
+                                if ($pdo) {
+                                    $stmt = $pdo->query("PRAGMA table_info('{$cleanTableName}')");
+                                    if ($stmt) {
+                                        $cols = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                                        $existingCols = array_map(fn($c) => strtolower($c['name']), $cols);
+                                    }
+                                }
+                            } catch (\Throwable $e) {}
+
+                            $columns = $this->prefixArray('add column', $this->getColumns($blueprint));
+
+                            return collect($columns)->reject(function ($column) use ($existingCols) {
+                                if (preg_match('/as \(.*\) stored/', $column) > 0) {
+                                    return true;
+                                }
+                                if (preg_match('/add column\s+["`]?([a-zA-Z0-9_]+)["`]?/i', $column, $m)) {
+                                    $colName = strtolower($m[1]);
+                                    if (in_array($colName, $existingCols, true)) {
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            })->map(function ($column) use ($blueprint) {
+                                return 'alter table '.$this->wrapTable($blueprint).' '.$column;
+                            })->all();
+                        }
+                    });
+                    try {
+                        $platform = $connection->getDoctrineConnection()->getDatabasePlatform();
+                        $platform->registerDoctrineTypeMapping('string', 'string');
+                        $platform->registerDoctrineTypeMapping('point', 'string');
+                        $platform->registerDoctrineTypeMapping('geometry', 'string');
+                        $platform->registerDoctrineTypeMapping('enum', 'string');
+                    } catch (\Throwable $t) {
+                    }
                 }
+            };
+
+            Event::listen(\Illuminate\Database\Events\ConnectionEstablished::class, function ($event) use ($setupConnection) {
+                $setupConnection($event->connection);
             });
 
             if (DB::connection()->getDriverName() === 'sqlite') {
-                $register(DB::connection()->getPdo());
-                try {
-                    $platform = DB::connection()->getDoctrineConnection()->getDatabasePlatform();
-                    $platform->registerDoctrineTypeMapping('string', 'string');
-                    $platform->registerDoctrineTypeMapping('point', 'string');
-                    $platform->registerDoctrineTypeMapping('geometry', 'string');
-                    $platform->registerDoctrineTypeMapping('enum', 'string');
-                } catch (\Throwable $t) {
-                }
+                $setupConnection(DB::connection());
             }
+
+            Log::debug('[db:connection:health]', [
+                'default'  => config('database.default'),
+                'driver'   => DB::connection()->getDriverName(),
+                'database' => DB::connection()->getDatabaseName(),
+            ]);
         } catch (\Throwable $e) {
             // Database connection may not be resolved yet
         }

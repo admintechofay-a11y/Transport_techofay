@@ -14,7 +14,6 @@ import {
 import { useUIStore } from '@/stores/ui.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { useDashboardMetrics } from '@/hooks/use-dashboard';
-import { useTransportStore } from '@/stores/transport-data.store';
 
 export const TopBar: React.FC = () => {
   const location = useLocation();
@@ -22,7 +21,6 @@ export const TopBar: React.FC = () => {
   const { setGlobalSearchOpen, notificationsOpen, setNotificationsOpen, darkMode, toggleDarkMode } = useUIStore();
   const { company } = useAuthStore();
   const { data: metrics } = useDashboardMetrics();
-  const vehicles = useTransportStore((s) => s.vehicles);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Click-outside listener for notifications dropdown
@@ -62,10 +60,10 @@ export const TopBar: React.FC = () => {
   const { title, subtitle } = getPageTitle(location.pathname);
   const isDashboard = location.pathname === '/' || location.pathname === '/dashboard';
 
-  // Metrics fallback from store
-  const expiringDocsCount = metrics?.expiring_documents || vehicles.filter((v) => v.insurance_expiry && new Date(v.insurance_expiry) < new Date(Date.now() + 60 * 86400000)).length || 0;
-  const pendingPodsCount = metrics?.pending_pods || 2;
-  const outstandingBal = metrics?.outstanding_balance || 145000;
+  // Real server metrics
+  const expiringDocsCount = metrics?.expiring_documents ?? 0;
+  const pendingPodsCount = metrics?.pending_pods ?? 0;
+  const outstandingBal = metrics?.outstanding_balance ?? 0;
   const totalAlerts = (expiringDocsCount > 0 ? 1 : 0) + (pendingPodsCount > 0 ? 1 : 0) + (outstandingBal > 0 ? 1 : 0);
 
   return (

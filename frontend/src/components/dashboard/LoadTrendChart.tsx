@@ -8,10 +8,11 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { useTransportStore } from '@/stores/transport-data.store';
+import { useLoads } from '@/hooks/use-loads';
 
 export const LoadTrendChart: React.FC = () => {
-  const loads = useTransportStore((s) => s.loads);
+  const { data: serverLoads } = useLoads();
+  const loads = Array.isArray(serverLoads) ? serverLoads : ((serverLoads as any)?.data || []);
 
   // Calculate real 7-day movement from registered consignments
   const data = useMemo(() => {

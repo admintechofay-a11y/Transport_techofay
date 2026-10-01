@@ -22,15 +22,13 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { DocumentExpiryCard } from '@/components/shared/DocumentExpiryCard';
 import { daysUntilExpiry, getExpiryUrgency, formatDate } from '@/lib/utils/date';
 import { toast } from 'sonner';
-import { useTransportStore } from '@/stores/transport-data.store';
 
 export const VehiclesPage: React.FC = () => {
   const { data: serverVehicles, isLoading } = useVehicles();
   const createVehicleMutation = useCreateVehicle();
-  const storeVehicles = useTransportStore((s) => s.vehicles);
   const rawList = Array.isArray(serverVehicles)
     ? serverVehicles
-    : ((serverVehicles as any)?.vehicles || (serverVehicles as any)?.data || (storeVehicles.length > 0 ? storeVehicles : []));
+    : ((serverVehicles as any)?.vehicles || (serverVehicles as any)?.data || []);
   const vehicles: Vehicle[] = Array.isArray(rawList) ? rawList : [];
 
   const [searchTerm, setSearchTerm] = useState('');

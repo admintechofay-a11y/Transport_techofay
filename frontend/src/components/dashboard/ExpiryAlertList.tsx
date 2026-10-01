@@ -2,7 +2,8 @@ import React from 'react';
 import { AlertTriangle, Clock, ChevronRight, FileText, UserCheck, CheckCircle2 } from 'lucide-react';
 import { daysUntilExpiry, getExpiryUrgency, formatDate } from '@/lib/utils/date';
 import { useNavigate } from 'react-router-dom';
-import { useTransportStore } from '@/stores/transport-data.store';
+import { useVehicles } from '@/hooks/use-vehicles';
+import { useDrivers } from '@/hooks/use-drivers';
 
 export interface ExpiryAlertItem {
   id: string;
@@ -24,8 +25,10 @@ export const ExpiryAlertList: React.FC<ExpiryAlertListProps> = ({
   onViewDoc,
 }) => {
   const navigate = useNavigate();
-  const vehicles = useTransportStore((s) => s.vehicles);
-  const drivers = useTransportStore((s) => s.drivers);
+  const { data: serverVehicles } = useVehicles();
+  const { data: serverDrivers } = useDrivers();
+  const vehicles = Array.isArray(serverVehicles) ? serverVehicles : ((serverVehicles as any)?.vehicles || (serverVehicles as any)?.data || []);
+  const drivers = Array.isArray(serverDrivers) ? serverDrivers : ((serverDrivers as any)?.drivers || (serverDrivers as any)?.data || []);
 
   const alerts: ExpiryAlertItem[] = React.useMemo(() => {
     if (propsAlerts) return propsAlerts;

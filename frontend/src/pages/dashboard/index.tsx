@@ -27,7 +27,9 @@ import { HeroAdmissionBanner } from '@/components/shared/HeroAdmissionBanner';
 import { useDashboardMetrics } from '@/hooks/use-dashboard';
 import { useVehicles } from '@/hooks/use-vehicles';
 import { useDrivers } from '@/hooks/use-drivers';
-import { useTransportStore } from '@/stores/transport-data.store';
+import { useLoads } from '@/hooks/use-loads';
+import { useBilties } from '@/hooks/use-bilties';
+import { useLrNumbers } from '@/hooks/use-lr-numbers';
 import { Vehicle } from '@/types/vehicle.types';
 import { Driver } from '@/types/driver.types';
 import { formatINR } from '@/lib/utils/currency';
@@ -37,6 +39,9 @@ export const DashboardPage: React.FC = () => {
   const { data: metrics, isLoading, refetch } = useDashboardMetrics();
   const { data: serverVehicles } = useVehicles();
   const { data: serverDrivers } = useDrivers();
+  const { data: serverLoads } = useLoads();
+  const { data: serverBilties } = useBilties();
+  const { data: serverLrNumbers } = useLrNumbers();
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
   const fabRef = useRef<HTMLDivElement>(null);
@@ -55,41 +60,34 @@ export const DashboardPage: React.FC = () => {
     };
   }, [fabOpen]);
 
-  // Subscribe directly to reactive transport store
-  const loads = useTransportStore((s) => s.loads);
-  const vehicles = useTransportStore((s) => s.vehicles);
-  const drivers = useTransportStore((s) => s.drivers);
-  const bilties = useTransportStore((s) => s.bilties);
-  const lrNumbers = useTransportStore((s) => s.lrNumbers);
-  const customers = useTransportStore((s) => s.customers);
-
+  const liveLoads = Array.isArray(serverLoads) ? serverLoads : ((serverLoads as any)?.data || []);
   const liveVehicles: Vehicle[] = Array.isArray(serverVehicles)
     ? serverVehicles
-    : ((serverVehicles as any)?.vehicles || (serverVehicles as any)?.data || vehicles);
+    : ((serverVehicles as any)?.vehicles || (serverVehicles as any)?.data || []);
 
   const liveDrivers: Driver[] = Array.isArray(serverDrivers)
     ? serverDrivers
-    : ((serverDrivers as any)?.drivers || (serverDrivers as any)?.data || drivers);
+    : ((serverDrivers as any)?.drivers || (serverDrivers as any)?.data || []);
 
-  const activeVehiclesList = (liveVehicles && liveVehicles.length > 0) ? liveVehicles : vehicles;
-  const activeDriversList = (liveDrivers && liveDrivers.length > 0) ? liveDrivers : drivers;
+  const liveBilties = Array.isArray(serverBilties) ? serverBilties : ((serverBilties as any)?.data || []);
+  const liveLrNumbers = Array.isArray(serverLrNumbers) ? serverLrNumbers : ((serverLrNumbers as any)?.data || []);
 
-  const totalRegisteredFreight = loads.reduce((sum: number, l: any) => sum + (Number(l.total_freight) || 0), 0);
-  const availableVehiclesCount = activeVehiclesList.filter((v) => v.status === 'available' || v.status === 'active' || !v.status).length;
-  const onTripDriversCount = activeDriversList.filter((d) => d.status === 'on_trip').length;
+  const totalRegisteredFreight = liveLoads.reduce((sum: number, l: any) => sum + (Number(l.total_freight) || 0), 0);
+  const availableVehiclesCount = liveVehicles.filter((v) => v.status === 'available' || v.status === 'active' || !v.status).length;
+  const onTripDriversCount = liveDrivers.filter((d) => d.status === 'on_trip').length;
 
   const stats = {
-    activeLoads: loads.length > 0 ? loads.length : (metrics?.today_loads ?? 0),
-    availableVehicles: availableVehiclesCount > 0 ? availableVehiclesCount : (metrics?.vehicles_available ?? activeVehiclesList.length),
+    activeLoads: liveLoads.length > 0 ? liveLoads.length : (metrics?.today_loads ?? 0),
+    availableVehicles: availableVehiclesCount > 0 ? availableVehiclesCount : (metrics?.vehicles_available ?? liveVehicles.length),
     driversOnTrip: onTripDriversCount > 0 ? onTripDriversCount : (metrics?.drivers_on_trip ?? 0),
-    pendingLrs: lrNumbers.length > 0 ? lrNumbers.filter((l) => l.status === 'generated' || l.status === 'pending').length : (metrics?.pending_lrs ?? 0),
-    pendingBilties: bilties.length > 0 ? bilties.filter((b) => b.status === 'issued' || b.status === 'pending').length : (metrics?.pending_bilties ?? 0),
+    pendingLrs: liveLrNumbers.length > 0 ? liveLrNumbers.filter((l: any) => l.status === 'generated' || l.status === 'pending').length : (metrics?.pending_lrs ?? 0),
+    pendingBilties: liveBilties.length > 0 ? liveBilties.filter((b: any) => b.status === 'issued' || b.status === 'pending').length : (metrics?.pending_bilties ?? 0),
     freightToday: totalRegisteredFreight > 0 ? totalRegisteredFreight : (metrics?.total_freight_today ?? 0),
     pendingPods: metrics?.pending_pods ?? 0,
-    expiringDocs: activeVehiclesList.filter((v) => v.insurance_expiry && new Date(v.insurance_expiry) < new Date(Date.now() + 60 * 86400000)).length,
+    expiringDocs: liveVehicles.filter((v) => v.insurance_expiry && new Date(v.insurance_expiry) < new Date(Date.now() + 60 * 86400000)).length,
   };
 
-  const recentLoads = loads.slice(0, 8).map((l: any) => ({
+  const recentLoads = liveLoads.slice(0, 8).map((l: any) => ({
     id: l.load_number || l.id,
     from: l.origin_location?.name || 'Origin',
     to: l.destination_location?.name || 'Destination',
@@ -189,10 +187,10 @@ return (
         </div>
         <div>
           <VehicleStatusChart
-            available={activeVehiclesList.filter((v) => v.status === 'available' || !v.status).length}
-            onTrip={activeVehiclesList.filter((v) => v.status === 'on_trip').length || activeDriversList.filter((d) => d.status === 'on_trip').length}
-            maintenance={activeVehiclesList.filter((v) => v.status === 'under_maintenance' || v.status === 'maintenance').length}
-            inactive={activeVehiclesList.filter((v) => v.status === 'inactive').length}
+            available={liveVehicles.filter((v) => v.status === 'available' || !v.status).length}
+            onTrip={liveVehicles.filter((v) => v.status === 'on_trip').length || liveDrivers.filter((d) => d.status === 'on_trip').length}
+            maintenance={liveVehicles.filter((v) => v.status === 'under_maintenance' || v.status === 'maintenance').length}
+            inactive={liveVehicles.filter((v) => v.status === 'inactive').length}
           />
         </div>
       </div>

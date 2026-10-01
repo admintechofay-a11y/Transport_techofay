@@ -127,6 +127,10 @@ return new class extends Migration {
             }
         }
 
+        if (!Schema::hasColumn('contacts', 'user_uuid') || !Schema::hasColumn('drivers', 'user_uuid')) {
+            return false;
+        }
+
         return true;
     }
 };

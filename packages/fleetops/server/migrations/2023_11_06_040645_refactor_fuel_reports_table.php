@@ -13,10 +13,19 @@ return new class extends Migration {
     public function up()
     {
         Schema::table('fuel_reports', function (Blueprint $table) {
-            $table->dropColumn(['longitude', 'latitude']);
-            $table->json('meta')->nullable()->after('metric_unit');
-            $table->mediumText('report')->nullable()->after('vehicle_uuid');
-            $table->foreignUuid('reported_by_uuid')->nullable()->after('vehicle_uuid')->references('uuid')->on('users')->onDelete('cascade');
+            $colsToDrop = array_filter(['longitude', 'latitude'], fn($col) => Schema::hasColumn('fuel_reports', $col));
+            if (!empty($colsToDrop)) {
+                $table->dropColumn($colsToDrop);
+            }
+            if (!Schema::hasColumn('fuel_reports', 'meta')) {
+                $table->json('meta')->nullable()->after('metric_unit');
+            }
+            if (!Schema::hasColumn('fuel_reports', 'report')) {
+                $table->mediumText('report')->nullable()->after('vehicle_uuid');
+            }
+            if (!Schema::hasColumn('fuel_reports', 'reported_by_uuid')) {
+                $table->foreignUuid('reported_by_uuid')->nullable()->after('vehicle_uuid')->references('uuid')->on('users')->onDelete('cascade');
+            }
         });
     }
 

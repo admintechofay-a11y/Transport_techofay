@@ -23,23 +23,20 @@ import { StatusBadge } from '@/components/shared/StatusBadge';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { daysUntilExpiry, getExpiryUrgency, formatDate } from '@/lib/utils/date';
 import { toast } from 'sonner';
-import { useTransportStore } from '@/stores/transport-data.store';
 
 export const DriversPage: React.FC = () => {
   const { data: serverDrivers, isLoading } = useDrivers();
   const createDriverMutation = useCreateDriver();
   const { data: serverVehicles } = useVehicles();
-  const storeDrivers = useTransportStore((s) => s.drivers);
-  const storeVehicles = useTransportStore((s) => s.vehicles);
 
   const rawDriversList = Array.isArray(serverDrivers)
     ? serverDrivers
-    : ((serverDrivers as any)?.drivers || (serverDrivers as any)?.data || (storeDrivers.length > 0 ? storeDrivers : []));
+    : ((serverDrivers as any)?.drivers || (serverDrivers as any)?.data || []);
   const drivers: Driver[] = Array.isArray(rawDriversList) ? rawDriversList : [];
 
   const rawVehiclesList = Array.isArray(serverVehicles)
     ? serverVehicles
-    : ((serverVehicles as any)?.vehicles || (serverVehicles as any)?.data || (storeVehicles.length > 0 ? storeVehicles : []));
+    : ((serverVehicles as any)?.vehicles || (serverVehicles as any)?.data || []);
   const fleetVehicles: Vehicle[] = Array.isArray(rawVehiclesList) ? rawVehiclesList : [];
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -351,13 +348,13 @@ export const DriversPage: React.FC = () => {
                 <div className="flex justify-between pt-1">
                   <span className="text-slate-500">Account Number:</span>
                   <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                    {selectedDriver.bank_account_number || '918273645102'}
+                    {selectedDriver.bank_account_number || 'Not provided'}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Bank IFSC:</span>
                   <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                    {selectedDriver.bank_ifsc || 'SBIN0001234'}
+                    {selectedDriver.bank_ifsc || 'Not provided'}
                   </span>
                 </div>
               </div>

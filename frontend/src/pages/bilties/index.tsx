@@ -15,18 +15,20 @@ import {
   X,
 } from 'lucide-react';
 import { useBilties, useCreateBilty } from '@/hooks/use-bilties';
+import { useLoads } from '@/hooks/use-loads';
 import { biltyApi } from '@/lib/api/bilties.api';
 import { Bilty } from '@/types/bilty.types';
-import { useTransportStore } from '@/stores/transport-data.store';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { WhatsAppShareButton } from '@/components/shared/WhatsAppShareButton';
 import { PdfPreviewDrawer } from '@/components/shared/PdfPreviewDrawer';
 import { formatINR } from '@/lib/utils/currency';
 import { formatDate } from '@/lib/utils/date';
+import { downloadBiltyPdf } from '@/lib/pdf-downloader';
 import { toast } from 'sonner';
 
 export const BiltiesPage: React.FC = () => {
-  const storeLoads = useTransportStore((s) => s.loads);
+  const { data: serverLoads } = useLoads();
+  const availableLoads = Array.isArray(serverLoads) ? serverLoads : ((serverLoads as any)?.data || []);
 
   const { data: serverBilties, isLoading } = useBilties();
   const createBiltyMutation = useCreateBilty();
@@ -42,7 +44,7 @@ export const BiltiesPage: React.FC = () => {
   const [activeCopyTab, setActiveCopyTab] = useState<'consignee' | 'consignor' | 'driver' | 'transporter'>('consignee');
 
   const handleIssueBilty = async () => {
-    const selectedL = storeLoads.find((l) => l.id === selectedLoadId || l.load_number === selectedLoadId) || storeLoads[0];
+    const selectedL = availableLoads.find((l: any) => l.id === selectedLoadId || l.load_number === selectedLoadId || l.uuid === selectedLoadId) || availableLoads[0];
     if (!selectedL) {
       toast.error('Please create or select an active consignment load first');
       return;
@@ -446,8 +448,8 @@ export const BiltiesPage: React.FC = () => {
                   className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5 font-mono"
                 >
                   <option value="">-- Select Active Consignment --</option>
-                  {storeLoads.map((l) => (
-                    <option key={l.id || l.load_number} value={l.id || l.load_number}>
+                  {availableLoads.map((l: any) => (
+                    <option key={l.id || l.uuid || l.load_number} value={l.id || l.uuid || l.load_number}>
                       {l.load_number} ({l.consignor?.name || 'Shipper'} → {l.consignee?.name || 'Receiver'})
                     </option>
                   ))}

@@ -13,12 +13,25 @@ return new class extends Migration {
     public function up()
     {
         Schema::table('issues', function (Blueprint $table) {
-            $table->dropColumn(['longitude', 'latitude', 'odometer']);
-            $table->string('category')->nullable()->after('type');
-            $table->json('tags')->nullable()->after('priority');
-            $table->json('meta')->nullable()->after('priority');
-            $table->mediumText('report')->change();
-            $table->foreignUuid('reported_by_uuid')->nullable()->after('assigned_to_uuid')->references('uuid')->on('users')->onDelete('cascade');
+            $colsToDrop = array_filter(['longitude', 'latitude', 'odometer'], fn($col) => Schema::hasColumn('issues', $col));
+            if (!empty($colsToDrop)) {
+                $table->dropColumn($colsToDrop);
+            }
+            if (!Schema::hasColumn('issues', 'category')) {
+                $table->string('category')->nullable()->after('type');
+            }
+            if (!Schema::hasColumn('issues', 'tags')) {
+                $table->json('tags')->nullable()->after('priority');
+            }
+            if (!Schema::hasColumn('issues', 'meta')) {
+                $table->json('meta')->nullable()->after('priority');
+            }
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->mediumText('report')->change();
+            }
+            if (!Schema::hasColumn('issues', 'reported_by_uuid')) {
+                $table->foreignUuid('reported_by_uuid')->nullable()->after('assigned_to_uuid')->references('uuid')->on('users')->onDelete('cascade');
+            }
         });
     }
 

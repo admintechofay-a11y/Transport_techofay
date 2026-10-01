@@ -38,13 +38,13 @@ describe('LR Numbers API', () => {
       remarks: 'Automated test LR',
     };
     (apiClient.post as any).mockResolvedValueOnce({
-      data: { lr_number: { id: 1, lr_number: 'LR-2026-000001', status: 'BOOKED' } },
+      data: { id: 1, lr_number: 'LR-2026-000001', status: 'BOOKED' },
     });
 
     const res = await lrApi.create(payload);
 
     expect(apiClient.post).toHaveBeenCalledWith('/lr-numbers', payload);
-    expect(res.lr_number.lr_number).toBe('LR-2026-000001');
+    expect(res.lr_number).toBe('LR-2026-000001');
   });
 
   it('calls POST /lr-numbers/:id/status to trigger state transition', async () => {

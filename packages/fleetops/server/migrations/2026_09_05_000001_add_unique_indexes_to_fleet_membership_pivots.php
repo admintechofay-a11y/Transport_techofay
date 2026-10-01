@@ -118,6 +118,16 @@ return new class extends Migration {
 
     private function indexExists(string $table, string $index): bool
     {
+        if (DB::getDriverName() === 'sqlite') {
+            $indexes = DB::select("PRAGMA index_list('{$table}')");
+            foreach ($indexes as $idx) {
+                if (($idx->name ?? null) === $index) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         $database = DB::connection()->getDatabaseName();
 
         return DB::table('information_schema.statistics')

@@ -9,7 +9,7 @@ return [
         ],
     ],
     'connection' => [
-        'db' => env('DB_CONNECTION', 'mysql'),
+        'db' => env('DB_CONNECTION', 'sqlite'),
         'sandbox' => env('SANDBOX_DB_CONNECTION', 'sandbox'),
     ],
     'version' => env('FLEETBASE_VERSION', '1.0.0'),

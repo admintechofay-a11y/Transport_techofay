@@ -73,11 +73,22 @@ describe('freightApi', () => {
   });
 
   it('calls GET /customers/:id/statement for customer ledger', async () => {
-    const mockStatement = {
-      customer: { name: 'Acme Logistics' },
-      total_billed: 150000,
-      total_paid: 100000,
-      balance_due: 50000,
+    const mockStatement: any = {
+      customer: { uuid: 'c1', public_id: 'cust_1', name: 'Acme Logistics' },
+      period: { from_date: '2026-01-01', to_date: '2026-03-31' },
+      summary: {
+        total_loads: 5,
+        total_lrs: 5,
+        total_bilties: 5,
+        total_freight_billed: 150000,
+        total_advance_paid: 100000,
+        total_deductions: 0,
+        outstanding_balance: 50000,
+      },
+      transactions: [],
+      loads: [],
+      lrs: [],
+      bilties: [],
     };
     (apiClient.get as any).mockResolvedValueOnce({ data: mockStatement });
 
@@ -86,7 +97,7 @@ describe('freightApi', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/customers/cust_1/statement', {
       params: { from_date: '2026-01-01', to_date: '2026-03-31' },
     });
-    expect(res.balance_due).toBe(50000);
+    expect(res.summary.outstanding_balance).toBe(50000);
   });
 
   it('generates correct invoice and statement PDF URLs', () => {

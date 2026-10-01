@@ -22,7 +22,7 @@ return new class extends Migration {
                 $table->json('telematics')->nullable()->after('meta');
             }
 
-            $table->dropColumn([
+            $colsToDrop = array_filter([
                 'model_0_to_100_kph',
                 'model_body',
                 'model_co2',
@@ -53,7 +53,11 @@ return new class extends Migration {
                 'model_weight_kg',
                 'model_wheelbase_mm',
                 'model_width_mm',
-            ]);
+            ], fn($col) => Schema::hasColumn('vehicles', $col));
+
+            if (!empty($colsToDrop)) {
+                $table->dropColumn($colsToDrop);
+            }
         });
     }
 

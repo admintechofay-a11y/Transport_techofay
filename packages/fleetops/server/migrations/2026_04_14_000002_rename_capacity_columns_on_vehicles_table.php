@@ -24,15 +24,29 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('vehicles', function (Blueprint $table) {
-            // Drop the redundant weight capacity column (payload_capacity already exists)
-            $table->dropColumn('capacity_weight_kg');
+        if (Schema::hasColumn('vehicles', 'capacity_weight_kg')) {
+            Schema::table('vehicles', function (Blueprint $table) {
+                $table->dropColumn('capacity_weight_kg');
+            });
+        }
 
-            // Rename remaining columns to follow payload_capacity_* convention
-            $table->renameColumn('capacity_volume_m3', 'payload_capacity_volume');
-            $table->renameColumn('capacity_pallets', 'payload_capacity_pallets');
-            $table->renameColumn('capacity_parcels', 'payload_capacity_parcels');
-        });
+        if (Schema::hasColumn('vehicles', 'capacity_volume_m3')) {
+            Schema::table('vehicles', function (Blueprint $table) {
+                $table->renameColumn('capacity_volume_m3', 'payload_capacity_volume');
+            });
+        }
+
+        if (Schema::hasColumn('vehicles', 'capacity_pallets')) {
+            Schema::table('vehicles', function (Blueprint $table) {
+                $table->renameColumn('capacity_pallets', 'payload_capacity_pallets');
+            });
+        }
+
+        if (Schema::hasColumn('vehicles', 'capacity_parcels')) {
+            Schema::table('vehicles', function (Blueprint $table) {
+                $table->renameColumn('capacity_parcels', 'payload_capacity_parcels');
+            });
+        }
     }
 
     public function down(): void

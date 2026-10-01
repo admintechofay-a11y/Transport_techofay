@@ -31,9 +31,11 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration {
     public function up(): void
     {
-        DB::statement(
-            'ALTER TABLE `orders` MODIFY COLUMN `orchestrator_priority` TINYINT UNSIGNED NULL DEFAULT 50'
-        );
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement(
+                'ALTER TABLE `orders` MODIFY COLUMN `orchestrator_priority` TINYINT UNSIGNED NULL DEFAULT 50'
+            );
+        }
     }
 
     public function down(): void

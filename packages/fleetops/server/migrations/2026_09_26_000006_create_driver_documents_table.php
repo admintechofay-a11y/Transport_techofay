@@ -34,6 +34,17 @@ return new class extends Migration {
                 $table->index(['company_uuid', 'document_type']);
                 $table->index(['driver_uuid', 'is_active']);
             });
+        } else {
+            Schema::table('driver_documents', function (Blueprint $table) {
+                if (!Schema::hasColumn('driver_documents', 'document_label')) $table->string('document_label', 255)->nullable();
+                if (!Schema::hasColumn('driver_documents', 'file_uuid')) $table->string('file_uuid', 191)->nullable();
+                if (!Schema::hasColumn('driver_documents', 'file_url')) $table->string('file_url', 500)->nullable();
+                if (!Schema::hasColumn('driver_documents', 'issued_date')) $table->date('issued_date')->nullable();
+                if (!Schema::hasColumn('driver_documents', 'issuing_authority')) $table->string('issuing_authority', 255)->nullable();
+                if (!Schema::hasColumn('driver_documents', 'document_number')) $table->string('document_number', 100)->nullable();
+                if (!Schema::hasColumn('driver_documents', 'notes')) $table->text('notes')->nullable();
+                if (!Schema::hasColumn('driver_documents', 'created_by_uuid')) $table->string('created_by_uuid', 191)->nullable();
+            });
         }
     }
 

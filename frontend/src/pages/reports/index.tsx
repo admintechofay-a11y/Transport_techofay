@@ -16,7 +16,9 @@ import { formatINR } from '@/lib/utils/currency';
 import { formatDate, daysUntilExpiry } from '@/lib/utils/date';
 import { downloadCsv } from '@/lib/pdf-downloader';
 import { toast } from 'sonner';
-import { useTransportStore } from '@/stores/transport-data.store';
+import { useLoads } from '@/hooks/use-loads';
+import { useVehicles } from '@/hooks/use-vehicles';
+import { useDrivers } from '@/hooks/use-drivers';
 
 type ReportType =
   | 'loads_summary'
@@ -26,9 +28,13 @@ type ReportType =
   | 'compliance_expiries';
 
 export const ReportsPage: React.FC = () => {
-  const loads = useTransportStore((s) => s.loads);
-  const vehicles = useTransportStore((s) => s.vehicles);
-  const drivers = useTransportStore((s) => s.drivers);
+  const { data: serverLoads } = useLoads();
+  const { data: serverVehicles } = useVehicles();
+  const { data: serverDrivers } = useDrivers();
+
+  const loads = Array.isArray(serverLoads) ? serverLoads : ((serverLoads as any)?.data || []);
+  const vehicles = Array.isArray(serverVehicles) ? serverVehicles : ((serverVehicles as any)?.vehicles || (serverVehicles as any)?.data || []);
+  const drivers = Array.isArray(serverDrivers) ? serverDrivers : ((serverDrivers as any)?.drivers || (serverDrivers as any)?.data || []);
 
   const [reportType, setReportType] = useState<ReportType>('loads_summary');
   const [dateRange, setDateRange] = useState('month_to_date');

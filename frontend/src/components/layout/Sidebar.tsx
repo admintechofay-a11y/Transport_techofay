@@ -29,15 +29,13 @@ import {
 import { useUIStore } from '@/stores/ui.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { useDashboardMetrics } from '@/hooks/use-dashboard';
-import { useTransportStore } from '@/stores/transport-data.store';
 import { cn } from '@/lib/utils';
 
 export const Sidebar: React.FC = () => {
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const { user, company, logout } = useAuthStore();
   const { data: metrics } = useDashboardMetrics();
-  const storeLoads = useTransportStore((s) => s.loads);
-  const pendingPodsCount = storeLoads.filter((l) => l.pod_status !== 'verified').length;
+  const pendingPodsCount = metrics?.pending_pods ?? 0;
   const navigate = useNavigate();
   const location = useLocation();
 

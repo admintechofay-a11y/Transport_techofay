@@ -767,9 +767,9 @@ export const downloadLrPdf = (data: {
   weight?: string | number;
   freight?: number;
 }) => {
-  const lrNo = data.lrNumber || `LR-${new Date().getFullYear()}-00891`;
+  const lrNo = data.lrNumber || `LR-${new Date().getFullYear()}-0001`;
   const date = data.date || new Date().toLocaleDateString('en-IN');
-  const freight = data.freight || 48500;
+  const freight = data.freight || 0;
 
   try {
     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });

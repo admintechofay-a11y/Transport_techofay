@@ -21,7 +21,6 @@ import {
   BTS_COMPANY_INFO,
 } from '@/lib/pdf-downloader';
 import { useCreateLoad } from '@/hooks/use-loads';
-import { useTransportStore } from '@/stores/transport-data.store';
 
 interface QuickAdmissionModalProps {
   isOpen: boolean;
