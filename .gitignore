@@ -8,6 +8,7 @@ __pycache__/
 .env
 .env.backup
 .phpunit.result.cache
+.local-logs/
 .pnpm-store
 .tool-versions
 docker-compose.override.yml
@@ -42,3 +43,7 @@ builds/osx/frankenphp
 *.dll
 *.so
 *.dylib
+
+api/storage/*.sqlite*
+api/database/*.sqlite*
+api/scratch/

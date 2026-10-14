@@ -92,11 +92,17 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($lr->bilty->material_details as $index => $item)
+            @php
+                $lrMaterials = is_array($lr->bilty->material_details) ? $lr->bilty->material_details : json_decode($lr->bilty->material_details, true);
+                if (is_array($lrMaterials) && !isset($lrMaterials[0])) {
+                    $lrMaterials = [$lrMaterials];
+                }
+            @endphp
+            @foreach($lrMaterials as $item)
             <tr>
-                <td>{{ $index + 1 }}</td>
-                <td>{{ $item['material'] ?? ($item['description'] ?? 'General Cargo') }}</td>
-                <td>{{ $item['quantity'] ?? '-' }} {{ $item['unit'] ?? '' }}</td>
+                <td>{{ $loop->iteration }}</td>
+                <td>{{ $item['material'] ?? ($item['item'] ?? ($item['description'] ?? 'General Cargo')) }}</td>
+                <td>{{ $item['quantity'] ?? '-' }} {{ $item['unit'] ?? ($item['package_type'] ?? '') }}</td>
                 <td>{{ $item['weight'] ?? '-' }} MT/Kg</td>
                 <td>{{ $item['remarks'] ?? '-' }}</td>
             </tr>

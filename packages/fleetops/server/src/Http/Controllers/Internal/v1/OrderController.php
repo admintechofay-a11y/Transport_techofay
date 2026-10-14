@@ -97,6 +97,34 @@ class OrderController extends FleetOpsController
      */
     public function createRecord(Request $request)
     {
+        $orderData = $request->input('order');
+        if (!is_array($orderData)) {
+            $orderData = $request->all();
+        }
+
+        // Auto-resolve order_config_uuid if omitted
+        if (empty($orderData['order_config_uuid'])) {
+            $defaultConfig = OrderConfig::defaultOrCreate();
+            \Illuminate\Support\Facades\Log::info('Order create debug config', [
+                'has_config' => !empty($defaultConfig),
+                'config_uuid' => $defaultConfig ? $defaultConfig->uuid : null,
+                'orderData_keys' => array_keys($orderData)
+            ]);
+            if ($defaultConfig) {
+                $orderData['order_config_uuid'] = $defaultConfig->uuid;
+            }
+        }
+
+        // Auto-resolve pickup and dropoff places if provided as array/object/string
+        if (isset($orderData['payload']['pickup']) && empty($orderData['payload']['pickup_uuid'])) {
+            $orderData['payload']['pickup_uuid'] = Place::insertFromMixed($orderData['payload']['pickup']);
+        }
+        if (isset($orderData['payload']['dropoff']) && empty($orderData['payload']['dropoff_uuid'])) {
+            $orderData['payload']['dropoff_uuid'] = Place::insertFromMixed($orderData['payload']['dropoff']);
+        }
+
+        $request->merge(['order' => $orderData]);
+
         // Create validation request
         $createOrderRequest  = CreateOrderRequest::createFrom($request);
         $rules               = $createOrderRequest->rules();
@@ -225,10 +253,12 @@ class OrderController extends FleetOpsController
 
             return ['order' => new $this->resource($record)];
         } catch (QueryException $e) {
-            return response()->error(app()->hasDebugModeEnabled() ? $e->getMessage() : 'Error occurred while trying to create a ' . $this->resourceSingularlName);
+            \Illuminate\Support\Facades\Log::error('Order creation QueryException: ' . $e->getMessage(), ['sql' => $e->getSql(), 'bindings' => $e->getBindings()]);
+            return response()->error($e->getMessage());
         } catch (FleetbaseRequestValidationException $e) {
             return response()->error($e->getErrors());
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Order creation Exception: ' . $e->getMessage());
             return response()->error($e->getMessage());
         }
     }
@@ -1851,7 +1881,7 @@ class OrderController extends FleetOpsController
 
     public function getDefaultOrderConfig()
     {
-        return response()->json(OrderConfig::default());
+        return response()->json(OrderConfig::defaultOrCreate());
     }
 
     public function lookup(Request $request)

@@ -48,13 +48,32 @@ describe('loadApi', () => {
       advance_amount: 15000,
       load_type: 'FTL',
     };
+    (apiClient.get as any).mockResolvedValueOnce({
+      data: { uuid: 'order-config-uuid' },
+    });
     (apiClient.post as any).mockResolvedValueOnce({
-      data: { id: 5, load_number: 'LD-2026-5555', ...payload },
+      data: { order: { id: 5, internal_id: 'LD-2026-5555', meta: payload, status: 'created' } },
     });
 
     const res = await loadApi.create(payload);
 
-    expect(apiClient.post).toHaveBeenCalledWith('/orders', payload);
+    expect(apiClient.get).toHaveBeenCalledWith('/orders/default-config');
+    expect(apiClient.post).toHaveBeenCalledWith('/orders', {
+      order: expect.objectContaining({
+        order_config_uuid: 'order-config-uuid',
+        type: 'transport',
+        status: 'created',
+        payload: expect.objectContaining({
+          pickup: expect.objectContaining({ name: 'Origin Hub' }),
+          dropoff: expect.objectContaining({ name: 'Destination Hub' }),
+          entities: [],
+        }),
+      }),
+    }, { timeout: 120000 });
+
+    const postedOrder = (apiClient.post as any).mock.calls[0][1].order;
+    expect(postedOrder.payload.pickup.country).toBeUndefined();
+    expect(postedOrder.payload.dropoff.country).toBeUndefined();
     expect(res.load_number).toBe('LD-2026-5555');
   });
 

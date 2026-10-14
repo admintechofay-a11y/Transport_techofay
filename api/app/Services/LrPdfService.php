@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use Fleetbase\FleetOps\Models\LrNumber;
-use Fleetbase\FleetOps\Services\PdfGenerationService;
+use App\Services\PdfGenerationService;
 
 class LrPdfService
 {

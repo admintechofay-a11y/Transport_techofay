@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Truck,
   Plus,
@@ -24,6 +25,7 @@ const defaultDemoLoads: Load[] = [];
 
 
 export const LoadsPage: React.FC = () => {
+  const navigate = useNavigate();
   const { data: serverLoads, isLoading, refetch } = useLoads();
   const rawList = Array.isArray(serverLoads) ? serverLoads : (serverLoads as any)?.data;
   const loads: Load[] = Array.isArray(rawList) ? rawList : [];
@@ -112,8 +114,7 @@ export const LoadsPage: React.FC = () => {
           loads={loads}
           onSelectLoad={(l) => setSelectedLoad(l)}
           onGenerateLr={(l) => {
-            toast.info(`Generating LR for load ${l.load_number || l.id}...`);
-            setSelectedLoad(l);
+            navigate(`/lr-numbers?load_uuid=${l.uuid || l.id}`);
           }}
           onShareWhatsApp={(l) => setWhatsAppLoad(l)}
         />
@@ -122,8 +123,7 @@ export const LoadsPage: React.FC = () => {
           loads={loads}
           onSelectLoad={(l) => setSelectedLoad(l)}
           onGenerateLr={(l) => {
-            toast.info(`Generating LR for load ${l.load_number || l.id}...`);
-            setSelectedLoad(l);
+            navigate(`/lr-numbers?load_uuid=${l.uuid || l.id}`);
           }}
           onShareWhatsApp={(l) => setWhatsAppLoad(l)}
         />
@@ -134,8 +134,12 @@ export const LoadsPage: React.FC = () => {
         load={selectedLoad}
         isOpen={Boolean(selectedLoad)}
         onClose={() => setSelectedLoad(null)}
-        onGenerateLr={(l) => toast.success(`LR sequence generated for ${l.load_number}!`)}
-        onCreateBilty={(l) => toast.success(`Bilty created for ${l.load_number}!`)}
+        onGenerateLr={(l) => {
+          navigate(`/lr-numbers?load_uuid=${l.uuid || l.id}`);
+        }}
+        onCreateBilty={(l) => {
+          navigate(`/bilties?load_uuid=${l.uuid || l.id}`);
+        }}
       />
 
       {/* 7-Section Load Booking Modal */}

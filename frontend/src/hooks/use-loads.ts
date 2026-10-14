@@ -27,9 +27,6 @@ export const useCreateLoad = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
       toast.success(`Load ${newLoad.load_number || newLoad.public_id} created successfully!`);
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Failed to create load.');
-    },
   });
 };
 
@@ -42,9 +39,6 @@ export const useUpdateLoadStatus = () => {
       queryClient.invalidateQueries({ queryKey: ['loads', id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
       toast.success('Load status updated');
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Failed to update load status.');
     },
   });
 };

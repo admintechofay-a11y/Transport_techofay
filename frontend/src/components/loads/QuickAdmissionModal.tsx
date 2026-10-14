@@ -80,6 +80,7 @@ export const QuickAdmissionModal: React.FC<QuickAdmissionModalProps> = ({
   const [diesel, setDiesel] = useState('0');
   const [localExp, setLocalExp] = useState('0');
   const [hamali, setHamali] = useState('0');
+  const [isSaving, setIsSaving] = useState(false);
 
   if (!isOpen) return null;
 
@@ -162,6 +163,9 @@ export const QuickAdmissionModal: React.FC<QuickAdmissionModalProps> = ({
   };
 
   const handleSaveAndConfirm = async () => {
+    if (isSaving) return;
+
+    setIsSaving(true);
     const payload = {
       load_number: slipNo,
       customer_reference: memoNo,
@@ -174,7 +178,43 @@ export const QuickAdmissionModal: React.FC<QuickAdmissionModalProps> = ({
       total_freight: numFreight,
       advance_amount: numAdvance,
       balance_amount: balance,
-      status: 'dispatched',
+      items: goodsDesc || weight
+        ? [{
+            description: goodsDesc || 'General cargo',
+            package_type: 'bulk',
+            quantity: 1,
+            weight: Number(weight) || 0.1,
+            declared_value: 0,
+          }]
+        : [],
+      // Quick admission captures free-text fleet details. Dispatch requires a
+      // real driver UUID, so assignment happens from the load workflow later.
+      status: 'created',
+      dispatch: false,
+      dispatched: false,
+      meta: {
+        booking_date: date,
+        order_source: orderSource,
+        vehicle_plate: truckNo,
+        driver_name: driverName,
+        driver_phone: driverPhone,
+        owner_name: ownerName,
+        owner_address: ownerAddress,
+        weight: Number(weight) || 0,
+        goods_description: goodsDesc,
+        rate: Number(rate) || 0,
+        detention_per_day: Number(detentionPerDay) || 0,
+        deductions: {
+          commission: Number(commission) || 0,
+          tapal: Number(tapal) || 0,
+          guide: Number(guide) || 0,
+          crane_godown: Number(craneGodown) || 0,
+          incoming_hamali: Number(incomingHamali) || 0,
+          hand_loan: Number(handLoan) || 0,
+          memo_hand_loan: Number(memoHandLoan) || 0,
+          diesel: Number(diesel) || 0,
+        },
+      },
     };
 
     try {
@@ -184,8 +224,20 @@ export const QuickAdmissionModal: React.FC<QuickAdmissionModalProps> = ({
       }
       toast.success(`Consignment ${slipNo} admitted successfully!`);
       onClose();
-    } catch (err: any) {
-      toast.error('Failed to admit consignment. Please check inputs.');
+    } catch (error: any) {
+      const responseData = error?.response?.data;
+      const validationErrors = responseData?.errors;
+      const validationMessage = Array.isArray(validationErrors)
+        ? validationErrors.join(', ')
+        : validationErrors && typeof validationErrors === 'object'
+          ? Object.entries(validationErrors)
+              .flatMap(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+              .join('; ')
+          : undefined;
+      const message = validationMessage || responseData?.message || error?.message || 'Could not register consignment.';
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -580,10 +632,11 @@ export const QuickAdmissionModal: React.FC<QuickAdmissionModalProps> = ({
             <button
               type="button"
               onClick={handleSaveAndConfirm}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-saffron-500 hover:bg-saffron-600 text-slate-950 px-5 py-2 text-xs font-bold shadow-md hover:shadow-lg transition active:scale-98"
+              disabled={isSaving || createLoadMutation.isPending}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-saffron-500 hover:bg-saffron-600 disabled:cursor-wait disabled:opacity-60 text-slate-950 px-5 py-2 text-xs font-bold shadow-md hover:shadow-lg transition active:scale-98"
             >
               <CheckCircle2 className="h-4 w-4 text-slate-950" />
-              Confirm & Register Consignment
+              {isSaving ? 'Registering...' : 'Confirm & Register Consignment'}
             </button>
           </div>
         </div>

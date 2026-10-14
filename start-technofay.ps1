@@ -3,9 +3,18 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "   Starting Technofay Transport Services" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
+$root = Split-Path -Parent $MyInvocation.MyCommand.Path
+$apiEnv = Join-Path $root "api\.env"
+if (!(Test-Path $apiEnv)) {
+    Write-Host "[i] Creating api/.env from the project template..." -ForegroundColor Yellow
+    Copy-Item (Join-Path $root "api\.env.example") $apiEnv
+}
+
 # Check if Docker is running
+Push-Location $root
 docker info >$null 2>&1
 if ($LASTEXITCODE -ne 0) {
+    Pop-Location
     Write-Host "[!] Docker is not running or not in PATH." -ForegroundColor Yellow
     Write-Host "    Please ensure Docker Desktop is started and running." -ForegroundColor Yellow
     Exit 1
@@ -19,6 +28,7 @@ Start-Sleep -Seconds 15
 
 Write-Host "[3/3] Running migrations and initial database deploy..." -ForegroundColor Green
 docker compose exec -T application bash -c "./deploy.sh"
+Pop-Location
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green

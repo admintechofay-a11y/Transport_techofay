@@ -74,10 +74,13 @@ class DeliveryChallanController extends FleetOpsController
         $companyUuid = session('company', $request->header('Company-Header'));
 
         $challan = $this->challanService->createDeliveryChallan($request->all(), $userUuid, $companyUuid);
+        $loaded = $challan->load(['order', 'vehicle', 'driver', 'consignee']);
 
         return response()->json([
-            'challan' => $challan->load(['order', 'vehicle', 'driver', 'consignee']),
-            'message' => 'Delivery challan issued successfully.',
+            'challan'          => $loaded,
+            'delivery_challan' => $loaded,
+            'data'             => $loaded,
+            'message'          => 'Delivery challan issued successfully.',
         ], 201);
     }
 
@@ -91,8 +94,12 @@ class DeliveryChallanController extends FleetOpsController
             return response()->json(['message' => 'Delivery challan not found.'], 404);
         }
 
+        $loaded = $challan->load(['order', 'vehicle', 'driver', 'consignee']);
+
         return response()->json([
-            'challan' => $challan->load(['order', 'vehicle', 'driver', 'consignee']),
+            'challan'          => $loaded,
+            'delivery_challan' => $loaded,
+            'data'             => $loaded,
         ]);
     }
 

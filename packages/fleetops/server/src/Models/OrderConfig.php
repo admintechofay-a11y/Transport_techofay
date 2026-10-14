@@ -500,7 +500,8 @@ class OrderConfig extends Model
      */
     public static function default(?Company $company = null): ?self
     {
-        return static::where(['namespace' => 'system:order-config:transport', 'company_uuid' => $company ? $company->uuid : session('company')])->first();
+        $companyUuid = $company ? $company->uuid : (session('company') ?: request()->header('Company') ?: request()->header('Company-Header'));
+        return static::where(['namespace' => 'system:order-config:transport', 'company_uuid' => $companyUuid])->first();
     }
 
     /**
@@ -508,12 +509,13 @@ class OrderConfig extends Model
      */
     public static function defaultOrCreate(?Company $company = null): ?self
     {
-        $company ??= Company::where('uuid', session('company'))->first();
+        $companyUuid = $company ? $company->uuid : (session('company') ?: request()->header('Company') ?: request()->header('Company-Header') ?: (request()->user() ? request()->user()->company_uuid : null));
+        $resolvedCompany = $company ?: (Company::where('uuid', $companyUuid)->first() ?: Company::first());
 
-        if (!$company) {
+        if (!$resolvedCompany) {
             return static::default($company);
         }
 
-        return static::default($company) ?? FleetOps::createTransportConfig($company);
+        return static::default($resolvedCompany) ?? FleetOps::createTransportConfig($resolvedCompany);
     }
 }

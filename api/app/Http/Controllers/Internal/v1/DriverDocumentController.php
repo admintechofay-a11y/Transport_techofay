@@ -22,6 +22,21 @@ class DriverDocumentController extends FleetOpsController
     }
 
     /**
+     * List active driver documents.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $query = DriverDocument::where('is_active', true);
+        if ($request->has('driver_uuid')) {
+            $query->where('driver_uuid', $request->input('driver_uuid'));
+        }
+        return response()->json([
+            'driver_documents' => $query->get(),
+            'data' => $query->get(),
+        ]);
+    }
+
+    /**
      * Store or replace a driver document with optional file upload.
      */
     public function store(Request $request): JsonResponse

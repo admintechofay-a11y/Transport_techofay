@@ -928,7 +928,7 @@ class Order extends Model
         $attributes['public_id']    = static::generatePublicId('payload');
         $attributes['_key']         = session('api_key', 'console');
         $attributes['created_at']   = Carbon::now()->toDateTimeString();
-        $attributes['company_uuid'] = session('company');
+        $attributes['company_uuid'] = $this->company_uuid ?: (session('company') ?: request()->header('Company') ?: request()->header('Company-Header'));
 
         $result = Payload::insert($attributes);
 

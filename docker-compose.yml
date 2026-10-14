@@ -43,22 +43,35 @@ services:
       # For development, use: SOCKETCLUSTER_OPTIONS: '{"origins":"http://localhost:*"}'
 
   scheduler:
-    image: fleetbase/fleetbase-api:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: scheduler-dev
     command: ["go-crond", "--verbose", "root:./crontab"]
     restart: unless-stopped
     environment:
+      DB_CONNECTION: mysql
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_DATABASE: fleetbase
+      DB_USERNAME: root
+      DB_PASSWORD: ""
       DATABASE_URL: "mysql://root@database/fleetbase"
       QUEUE_CONNECTION: redis
       CACHE_DRIVER: redis
       CACHE_PATH: /fleetbase/api/storage/framework/cache
       CACHE_URL: tcp://cache
       REDIS_URL: tcp://cache
+      LOCAL_REDIS_FALLBACK: "false"
     depends_on:
       - database
       - cache
 
   queue:
-    image: fleetbase/fleetbase-api:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: events-dev
     command: ["php", "artisan", "queue:work"]
     restart: unless-stopped
     healthcheck:
@@ -67,12 +80,19 @@ services:
       timeout: 10s
       retries: 3
     environment:
+      DB_CONNECTION: mysql
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_DATABASE: fleetbase
+      DB_USERNAME: root
+      DB_PASSWORD: ""
       DATABASE_URL: "mysql://root@database/fleetbase"
       QUEUE_CONNECTION: redis
       CACHE_DRIVER: redis
       CACHE_PATH: /fleetbase/api/storage/framework/cache
       CACHE_URL: tcp://cache
       REDIS_URL: tcp://cache
+      LOCAL_REDIS_FALLBACK: "false"
     depends_on:
       - database
       - cache
@@ -91,22 +111,35 @@ services:
 
   application:
     restart: unless-stopped
-    image: fleetbase/fleetbase-api:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: app-dev
     volumes:
       - ./api/.env:/fleetbase/api/.env
       - ./api/storage/app:/fleetbase/api/storage/app
     environment:
       ENVIRONMENT: development
+      APP_ENV: local
+      APP_DEBUG: "false"
       DATABASE_URL: "mysql://root@database/fleetbase"
+      DB_CONNECTION: mysql
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_DATABASE: fleetbase
+      DB_USERNAME: root
+      DB_PASSWORD: ""
       QUEUE_CONNECTION: redis
       CACHE_DRIVER: redis
       CACHE_PATH: /fleetbase/api/storage/framework/cache
       CACHE_URL: tcp://cache
       REDIS_URL: tcp://cache
+      LOCAL_REDIS_FALLBACK: "false"
       SESSION_DOMAIN: localhost
       BROADCAST_DRIVER: socketcluster
       MAIL_FROM_NAME: "Technofay Transport & Logistics"
       APP_NAME: "Technofay Transport & Logistics"
+      FRONTEND_HOSTS: "http://localhost:3001,http://localhost:4200"
       LOG_CHANNEL: daily
       REGISTRY_HOST: https://registry.fleetbase.io
       REGISTRY_PREINSTALLED_EXTENSIONS: "true"

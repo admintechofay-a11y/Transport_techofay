@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   FileText,
   Download,
@@ -15,6 +16,8 @@ import {
   Calendar,
   X,
   Check,
+  Package,
+  IndianRupee,
 } from 'lucide-react';
 import { useLrNumbers, useCreateLrNumber, useUpdateLrStatus } from '@/hooks/use-lr-numbers';
 import { useLoads } from '@/hooks/use-loads';
@@ -28,6 +31,10 @@ import { formatDate } from '@/lib/utils/date';
 import { toast } from 'sonner';
 
 export const LrNumbersPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const urlLoadId = searchParams.get('load_uuid') || searchParams.get('load_id');
+
   const { data: serverLrs, isLoading } = useLrNumbers();
   const createLrMutation = useCreateLrNumber();
   const updateLrStatusMutation = useUpdateLrStatus();
@@ -46,6 +53,24 @@ export const LrNumbersPage: React.FC = () => {
   const [previewPdfLr, setPreviewPdfLr] = useState<LrNumber | null>(null);
   const [whatsAppLr, setWhatsAppLr] = useState<LrNumber | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!urlLoadId) return;
+
+    const existingLr = lrs.find(
+      (lr: any) =>
+        lr.load_uuid === urlLoadId ||
+        lr.load?.uuid === urlLoadId ||
+        lr.load_id === urlLoadId
+    );
+    if (existingLr) {
+      setSelectedLr(existingLr);
+      setSearchTerm(existingLr.lr_number);
+    } else {
+      setSelectedLoadId(urlLoadId);
+      setIsCreateModalOpen(true);
+    }
+  }, [urlLoadId, lrs]);
 
   const handleIssueLr = async () => {
     const selectedL = loads.find((l: any) => (l.uuid || l.id || l.load_number) === selectedLoadId) || loads[0];
@@ -443,6 +468,36 @@ export const LrNumbersPage: React.FC = () => {
                   <span className="font-mono text-saffron-600 dark:text-saffron-400">
                     {formatINR(selectedLr.balance_amount || 0)}
                   </span>
+                </div>
+              </div>
+
+              {/* Connected Transport Operations */}
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                  Connected Consignment Flows
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button
+                    onClick={() => navigate(`/bilties?load_uuid=${(selectedLr as any).load_uuid || (selectedLr as any).load?.uuid || (selectedLr as any).load_id}`)}
+                    className="p-2.5 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 hover:bg-blue-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    Issue Bilty
+                  </button>
+                  <button
+                    onClick={() => navigate(`/delivery-challans?load_uuid=${(selectedLr as any).load_uuid || (selectedLr as any).load?.uuid || (selectedLr as any).load_id}`)}
+                    className="p-2.5 rounded-lg border border-purple-200 dark:border-purple-900 bg-purple-50/60 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 hover:bg-purple-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+                  >
+                    <Package className="w-3.5 h-3.5" />
+                    Challan
+                  </button>
+                  <button
+                    onClick={() => navigate(`/freight?load_uuid=${(selectedLr as any).load_uuid || (selectedLr as any).load?.uuid || (selectedLr as any).load_id}`)}
+                    className="p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-900 bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+                  >
+                    <IndianRupee className="w-3.5 h-3.5" />
+                    Freight
+                  </button>
                 </div>
               </div>
             </div>

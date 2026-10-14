@@ -167,7 +167,7 @@ return (
           icon={CheckCircle2}
           variant="warning"
           badge={stats.pendingPods > 0 ? `${stats.pendingPods} pending` : undefined}
-          onClick={() => navigate('/loads')}
+          onClick={() => navigate('/pod')}
         />
         <KpiCard
           title="Expiring Documents"
@@ -176,7 +176,7 @@ return (
           icon={AlertTriangle}
           variant={stats.expiringDocs > 0 ? 'danger' : 'success'}
           badge={stats.expiringDocs > 0 ? `${stats.expiringDocs} renewals` : undefined}
-          onClick={() => navigate('/vehicles')}
+          onClick={() => navigate('/documents')}
         />
       </div>
 

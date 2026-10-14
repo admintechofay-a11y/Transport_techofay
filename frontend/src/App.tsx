@@ -7,6 +7,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { LoginPage } from '@/pages/auth/Login';
 import { HomePage } from '@/pages/home/HomePage';
 import { useAuthStore } from '@/stores/auth.store';
+import { authApi } from '@/lib/api/auth.api';
 
 // Pages
 import { DashboardPage } from '@/pages/dashboard';
@@ -45,11 +46,52 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+const AuthBootstrap: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const initialToken = useAuthStore((state) => state.token);
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const logout = useAuthStore((state) => state.logout);
+  const [ready, setReady] = React.useState(!initialToken);
+
+  React.useEffect(() => {
+    if (!initialToken) {
+      return;
+    }
+
+    let active = true;
+
+    authApi
+      .getSession()
+      .then((session) => {
+        if (!session?.user || !session?.company) {
+          throw new Error('Session response is incomplete.');
+        }
+
+        if (active) {
+          setAuth(initialToken, session.user, session.company);
+        }
+      })
+      .catch(() => {
+        if (active) logout();
+      })
+      .finally(() => {
+        if (active) setReady(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [initialToken, logout, setAuth]);
+
+  if (!ready) return null;
+  return <>{children}</>;
+};
+
 export const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
+      <AuthBootstrap>
+        <BrowserRouter>
+          <Routes>
           {/* Public Landing & Auth Routes */}
           <Route path="/home" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -84,8 +126,9 @@ export const App: React.FC = () => {
 
           {/* Catch-all redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+          </Routes>
+        </BrowserRouter>
+      </AuthBootstrap>
     </QueryClientProvider>
   );
 };

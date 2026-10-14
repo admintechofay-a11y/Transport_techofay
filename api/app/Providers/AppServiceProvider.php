@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Support\LocalRedisManager;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Database\Events\TransactionBeginning;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Psr\Http\Message\RequestInterface;
@@ -35,7 +37,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->bind('Fleetbase\FleetOps\Services\PdfGenerationService', \App\Services\PdfGenerationService::class);
+        $this->app->bind(\NotificationChannels\Fcm\FcmChannel::class, function ($app) {
+            try {
+                $client = $app->make(\Kreait\Firebase\Contract\Messaging::class);
+                return new \NotificationChannels\Fcm\FcmChannel($app->make(\Illuminate\Contracts\Events\Dispatcher::class), $client);
+            } catch (\Throwable $e) {
+                return new class {
+                    public function send($notifiable, $notification)
+                    {
+                        return null;
+                    }
+                };
+            }
+        });
     }
 
     /**
@@ -45,9 +60,36 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->configureLocalRedisFallback();
         $this->configureSqliteSpatialPolyfills();
         $this->configureOutboundHttpLogging();
         $this->configureTransactionTripwire();
+    }
+
+    /**
+     * Fleetbase serializes places through a few direct Redis calls. Keep the
+     * local SQLite setup usable when Redis is not installed on the host.
+     */
+    protected function configureLocalRedisFallback(): void
+    {
+        // `env()` is not populated after Laravel caches configuration. Use the
+        // cached application environment so this also works in the HTTP worker.
+        if (config('app.env') === 'local' && !extension_loaded('redis')) {
+            // Redis is a deferred service in Laravel. Register the in-memory
+            // manager in the container before the first vendor call resolves
+            // the deferred PhpRedis manager, then keep the facade in sync.
+            $manager = new LocalRedisManager();
+            $install = function () use ($manager): void {
+                $this->app->instance('redis', $manager);
+                Redis::swap($manager);
+            };
+
+            $install();
+            // Fleetbase registers providers dynamically. Re-apply the binding
+            // after every provider has booted so one of those providers cannot
+            // replace the local manager with PhpRedis later in the lifecycle.
+            $this->app->booted($install);
+        }
     }
 
     /**
@@ -121,6 +163,21 @@ class AppServiceProvider extends ServiceProvider
                     $pdo->sqliteCreateFunction('ST_AsText', fn($geom) => $geom);
                     $pdo->sqliteCreateFunction('ST_X', fn($geom) => ($decodePoint($geom)['lng'] ?? null));
                     $pdo->sqliteCreateFunction('ST_Y', fn($geom) => ($decodePoint($geom)['lat'] ?? null));
+                    $pdo->sqliteCreateFunction('ST_Equals', function ($a, $b) use ($decodePoint) {
+                        if ($a === null || $b === null) {
+                            return 0;
+                        }
+                        if ($a === $b) {
+                            return 1;
+                        }
+                        $ptA = $decodePoint($a);
+                        $ptB = $decodePoint($b);
+                        if ($ptA && $ptB) {
+                            return (abs($ptA['lng'] - $ptB['lng']) < 0.00001 && abs($ptA['lat'] - $ptB['lat']) < 0.00001) ? 1 : 0;
+                        }
+                        return ((string) $a === (string) $b) ? 1 : 0;
+                    });
+                    $pdo->sqliteCreateFunction('ST_Buffer', fn($geom, $dist = null) => $geom);
                     $pdo->sqliteCreateFunction('ST_Distance_Sphere', function ($a, $b) use ($decodePoint) {
                         $from = $decodePoint($a);
                         $to   = $decodePoint($b);
@@ -217,7 +274,8 @@ class AppServiceProvider extends ServiceProvider
                 if ($connection->getDriverName() === 'sqlite') {
                     $register($connection->getPdo());
                     try {
-                        $connection->getPdo()->exec('PRAGMA foreign_keys = ON;');
+                        $fk = $connection->getConfig('foreign_key_constraints') ? 'ON' : 'OFF';
+                        $connection->getPdo()->exec("PRAGMA foreign_keys = {$fk};");
                     } catch (\Throwable $e) {}
                     $connection->setSchemaGrammar(new class extends \Illuminate\Database\Schema\Grammars\SQLiteGrammar {
                         public function compileSpatialIndex(\Illuminate\Database\Schema\Blueprint $blueprint, \Illuminate\Support\Fluent $command)

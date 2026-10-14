@@ -62,11 +62,17 @@
         </thead>
         <tbody>
             @if(!empty($challan->material_items))
-                @foreach($challan->material_items as $i => $item)
+                @php
+                    $challanItems = is_array($challan->material_items) ? $challan->material_items : json_decode($challan->material_items, true);
+                    if (is_array($challanItems) && !isset($challanItems[0])) {
+                        $challanItems = [$challanItems];
+                    }
+                @endphp
+                @foreach($challanItems as $item)
                 <tr>
-                    <td>{{ $i + 1 }}</td>
-                    <td>{{ $item['material'] ?? ($item['description'] ?? 'Cargo') }}</td>
-                    <td>{{ $item['quantity'] ?? '-' }} {{ $item['unit'] ?? '' }}</td>
+                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $item['material'] ?? ($item['item'] ?? ($item['description'] ?? 'Cargo')) }}</td>
+                    <td>{{ $item['quantity'] ?? '-' }} {{ $item['unit'] ?? ($item['package_type'] ?? '') }}</td>
                     <td>{{ $item['weight'] ?? '-' }} MT/Kg</td>
                 </tr>
                 @endforeach

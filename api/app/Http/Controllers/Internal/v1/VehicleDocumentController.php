@@ -22,6 +22,21 @@ class VehicleDocumentController extends FleetOpsController
     }
 
     /**
+     * List active vehicle documents.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $query = VehicleDocument::where('is_active', true);
+        if ($request->has('vehicle_uuid')) {
+            $query->where('vehicle_uuid', $request->input('vehicle_uuid'));
+        }
+        return response()->json([
+            'vehicle_documents' => $query->get(),
+            'data' => $query->get(),
+        ]);
+    }
+
+    /**
      * Store or replace a vehicle document with optional file upload.
      */
     public function store(Request $request): JsonResponse

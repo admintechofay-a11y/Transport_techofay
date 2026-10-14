@@ -14,6 +14,21 @@ export interface LoginResponse {
   company?: Company;
 }
 
+const normalizeAuthResponse = (payload: unknown): LoginResponse => {
+  const body = payload && typeof payload === 'object' && 'data' in payload && !('token' in payload)
+    ? (payload as { data: unknown }).data
+    : payload;
+
+  const response = (body ?? {}) as LoginResponse & { access_token?: string };
+  const token = response.token || response.access_token;
+
+  if (!token?.trim()) {
+    throw new Error('Authentication response did not include an access token.');
+  }
+
+  return { ...response, token };
+};
+
 export interface SignUpPayload {
   name: string;
   email: string;
@@ -28,7 +43,7 @@ export const authApi = {
    */
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
     const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
-    return response.data;
+    return normalizeAuthResponse(response.data);
   },
 
   /**
@@ -36,7 +51,7 @@ export const authApi = {
    */
   signUp: async (payload: SignUpPayload): Promise<LoginResponse> => {
     const response = await apiClient.post<LoginResponse>('/auth/sign-up', payload);
-    return response.data;
+    return normalizeAuthResponse(response.data);
   },
 
   /**

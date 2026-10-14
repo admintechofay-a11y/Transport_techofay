@@ -12,23 +12,36 @@ interface AuthState {
   logout: () => void;
 }
 
+const readJson = <T,>(keys: string[]): T | null => {
+  for (const key of keys) {
+    try {
+      const value = localStorage.getItem(key);
+      if (value) return JSON.parse(value) as T;
+    } catch {
+      localStorage.removeItem(key);
+    }
+  }
+
+  return null;
+};
+
 export const useAuthStore = create<AuthState>((set) => {
   // Read initial auth state from localStorage
   const savedToken = localStorage.getItem('technofay_token') || localStorage.getItem('fleetbase_token');
-  const savedUser = localStorage.getItem('technofay_user') || localStorage.getItem('fleetbase_user');
-  const savedCompany = localStorage.getItem('technofay_company') || localStorage.getItem('fleetbase_company');
+  const savedUser = readJson<User>(['technofay_user', 'fleetbase_user']);
+  const savedCompany = readJson<Company>(['technofay_company', 'fleetbase_company']);
 
   return {
     token: savedToken || null,
-    user: savedUser ? JSON.parse(savedUser) : null,
-    company: savedCompany ? JSON.parse(savedCompany) : {
-      uuid: 'company_techofay_01',
-      name: 'Technofay Transport & Logistics',
-      currency: 'INR',
-    },
-    isAuthenticated: !!savedToken,
+    user: savedUser,
+    company: savedCompany,
+    isAuthenticated: Boolean(savedToken && savedUser && savedCompany),
 
     setAuth: (token, user, company) => {
+      if (!token?.trim() || !user || !company?.uuid) {
+        throw new Error('Authentication response is incomplete. Please try again.');
+      }
+
       localStorage.setItem('technofay_token', token);
       localStorage.setItem('technofay_user', JSON.stringify(user));
       localStorage.setItem('technofay_company', JSON.stringify(company));

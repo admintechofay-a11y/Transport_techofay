@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   FileText,
   Plus,
@@ -34,6 +35,10 @@ import { useDrivers } from '@/hooks/use-drivers';
 import { toast } from 'sonner';
 
 export const DeliveryChallansPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const urlLoadId = searchParams.get('load_uuid') || searchParams.get('load_id');
+
   const { data: challansResponse, isLoading } = useDeliveryChallans();
   const createChallanMutation = useCreateDeliveryChallan();
   const updateChallanMutation = useUpdateDeliveryChallan();
@@ -73,7 +78,7 @@ export const DeliveryChallansPage: React.FC = () => {
   // Handle load selection in modal
   const handleLoadSelect = (loadId: string) => {
     setSelectedLoadId(loadId);
-    const foundLoad = storeLoads.find((l) => l.id === loadId || l.load_number === loadId);
+    const foundLoad = storeLoads.find((l) => l.id === loadId || l.load_number === loadId || l.uuid === loadId);
     if (foundLoad) {
       setConsigneeName(foundLoad.consignee?.name || '');
       setConsigneeAddress(foundLoad.destination_location?.name || foundLoad.consignee?.address || '');
@@ -84,6 +89,25 @@ export const DeliveryChallansPage: React.FC = () => {
       setTotalQuantity(String((foundLoad as any).quantity || '1'));
     }
   };
+
+  useEffect(() => {
+    if (!urlLoadId) return;
+
+    const existing = storeChallans.find((c) => c.load_uuid === urlLoadId || (c as any).load_id === urlLoadId);
+    if (existing) {
+      setSelectedChallan(existing);
+      setSearchTerm(existing.challan_number);
+    } else {
+      const foundLoad = storeLoads.find((l) => l.uuid === urlLoadId || l.id === urlLoadId || l.load_number === urlLoadId);
+      if (foundLoad) {
+        handleLoadSelect(String(foundLoad.id || foundLoad.uuid || ''));
+        const nextSeq = Math.floor(1000 + Math.random() * 9000);
+        setChallanNumber(`DC-${new Date().getFullYear()}-${nextSeq}`);
+        setRemarks('Unloading gate supervisor to inspect cargo seal and sign.');
+        setIsGenerateOpen(true);
+      }
+    }
+  }, [urlLoadId, storeLoads, storeChallans]);
 
   const openGenerateModal = () => {
     const nextSeq = Math.floor(1000 + Math.random() * 9000);

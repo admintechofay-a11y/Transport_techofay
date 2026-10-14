@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   ShieldCheck,
   Plus,
@@ -33,6 +34,10 @@ import { useDrivers } from '@/hooks/use-drivers';
 import { toast } from 'sonner';
 
 export const GatePassesPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const urlLoadId = searchParams.get('load_uuid') || searchParams.get('load_id');
+
   const { data: gatePassesResponse, isLoading } = useGatePasses();
   const createGatePassMutation = useCreateGatePass();
   const recordExitMutation = useRecordGatePassExit();
@@ -82,13 +87,32 @@ export const GatePassesPage: React.FC = () => {
 
   const handleLoadSelect = (loadId: string) => {
     setSelectedLoadId(loadId);
-    const found = storeLoads.find((l) => l.id === loadId || l.load_number === loadId);
+    const found = storeLoads.find((l) => l.id === loadId || l.load_number === loadId || l.uuid === loadId);
     if (found) {
       setVehiclePlate(found.vehicle?.plate_number || '');
       setDriverName(found.driver?.name || '');
       setRemarks(`Outward cargo dispatch to ${found.destination_location?.name || 'Customer'}. Seal inspected.`);
     }
   };
+
+  useEffect(() => {
+    if (!urlLoadId) return;
+
+    const existing = storeGatePasses.find((gp) => gp.load_uuid === urlLoadId || (gp as any).load_id === urlLoadId);
+    if (existing) {
+      setSelectedPass(existing);
+      setSearchTerm(existing.gate_pass_number);
+    } else {
+      const found = storeLoads.find((l) => l.uuid === urlLoadId || l.id === urlLoadId || l.load_number === urlLoadId);
+      if (found) {
+        handleLoadSelect(String(found.id || found.uuid || ''));
+        const nextSeq = Math.floor(1000 + Math.random() * 9000);
+        setPassNumber(`GP-${new Date().getFullYear()}-${nextSeq}`);
+        setPassType('out');
+        setIsCreateOpen(true);
+      }
+    }
+  }, [urlLoadId, storeLoads, storeGatePasses]);
 
   const handleSaveGatePass = async (e: React.FormEvent) => {
     e.preventDefault();

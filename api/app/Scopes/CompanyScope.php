@@ -14,22 +14,67 @@ class CompanyScope implements Scope
      */
     public static function resolveCompanyUuid(): ?string
     {
-        // 1. Check request headers
-        $headerCompany = request()?->header('Company-Header') ?? request()?->header('Company');
+        $user = Auth::user() ?? request()?->user();
+        if (!$user && request()) {
+            $bearer = request()->bearerToken();
+            if ($bearer) {
+                try {
+                    $tokenModel = \Laravel\Sanctum\PersonalAccessToken::findToken($bearer);
+                    if ($tokenModel && $tokenModel->tokenable) {
+                        $user = $tokenModel->tokenable;
+                    }
+                } catch (\Throwable $e) {
+                    // Ignore token resolution error
+                }
+            }
+        }
+
+        $headerCompany = request()?->header('Company-Header') 
+            ?? request()?->header('X-Company-Uuid')
+            ?? request()?->header('Company');
+
+        if ($user) {
+            // Super admins can operate across any specified company
+            if (($user->type ?? null) === 'super_admin') {
+                if (!empty($headerCompany)) {
+                    return (string) $headerCompany;
+                }
+                return $user->company_uuid ? (string) $user->company_uuid : null;
+            }
+
+            // Normal users: strictly enforce company membership
+            if (!empty($headerCompany)) {
+                if ((string) $headerCompany === (string) $user->company_uuid) {
+                    return (string) $headerCompany;
+                }
+
+                try {
+                    $isMember = \Fleetbase\Models\CompanyUser::where('user_uuid', $user->uuid)
+                        ->where('company_uuid', $headerCompany)
+                        ->exists();
+
+                    if ($isMember) {
+                        return (string) $headerCompany;
+                    }
+                } catch (\Throwable $e) {
+                    // In case table does not exist in testing
+                }
+
+                // Tenant spoofing attempt blocked: enforce authenticated user's company
+                return $user->company_uuid ? (string) $user->company_uuid : null;
+            }
+
+            return $user->company_uuid ? (string) $user->company_uuid : null;
+        }
+
+        // When unauthenticated (e.g. testing / console context)
         if (!empty($headerCompany)) {
             return (string) $headerCompany;
         }
 
-        // 2. Check active session
         $sessionCompany = session('company');
         if (!empty($sessionCompany)) {
             return (string) $sessionCompany;
-        }
-
-        // 3. Check authenticated user's company
-        $user = Auth::user();
-        if ($user && !empty($user->company_uuid)) {
-            return (string) $user->company_uuid;
         }
 
         return null;

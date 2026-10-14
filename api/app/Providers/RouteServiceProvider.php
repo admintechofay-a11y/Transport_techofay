@@ -53,6 +53,7 @@ class RouteServiceProvider extends ServiceProvider
                     Route::prefix($prefix)->group(function () {
                         Route::post('/login', [\App\Http\Controllers\Internal\v1\AuthController::class, 'login']);
                         Route::post('/sign-up', [\App\Http\Controllers\Internal\v1\AuthController::class, 'signUp']);
+                        Route::post('/logout', [\App\Http\Controllers\Internal\v1\AuthController::class, 'logout']);
                         Route::get('/session', [\App\Http\Controllers\Internal\v1\AuthController::class, 'session']);
                     });
                 };
@@ -205,6 +206,34 @@ class RouteServiceProvider extends ServiceProvider
                 $registerLrRoutes('v1/lr-numbers');
                 $registerLrRoutes('api/v1/lr-numbers');
                 $registerLrRoutes('int/v1/lr-numbers');
+
+                $registerVehicleDocRoutes = function (string $prefix) {
+                    Route::prefix($prefix)->group(function () {
+                        Route::get('/', [\App\Http\Controllers\Internal\v1\VehicleDocumentController::class, 'index']);
+                        Route::post('/', [\App\Http\Controllers\Internal\v1\VehicleDocumentController::class, 'store']);
+                        Route::get('/expiring', [\App\Http\Controllers\Internal\v1\VehicleDocumentController::class, 'getExpiring']);
+                        Route::get('/{id}/download', [\App\Http\Controllers\Internal\v1\VehicleDocumentController::class, 'download']);
+                        Route::delete('/{id}', [\App\Http\Controllers\Internal\v1\VehicleDocumentController::class, 'destroy']);
+                    });
+                };
+
+                $registerVehicleDocRoutes('v1/vehicle-documents');
+                $registerVehicleDocRoutes('api/v1/vehicle-documents');
+                $registerVehicleDocRoutes('int/v1/vehicle-documents');
+
+                $registerDriverDocRoutes = function (string $prefix) {
+                    Route::prefix($prefix)->group(function () {
+                        Route::get('/', [\App\Http\Controllers\Internal\v1\DriverDocumentController::class, 'index']);
+                        Route::post('/', [\App\Http\Controllers\Internal\v1\DriverDocumentController::class, 'store']);
+                        Route::get('/expiring', [\App\Http\Controllers\Internal\v1\DriverDocumentController::class, 'getExpiring']);
+                        Route::get('/{id}/download', [\App\Http\Controllers\Internal\v1\DriverDocumentController::class, 'download']);
+                        Route::delete('/{id}', [\App\Http\Controllers\Internal\v1\DriverDocumentController::class, 'destroy']);
+                    });
+                };
+
+                $registerDriverDocRoutes('v1/driver-documents');
+                $registerDriverDocRoutes('api/v1/driver-documents');
+                $registerDriverDocRoutes('int/v1/driver-documents');
             }
         );
     }

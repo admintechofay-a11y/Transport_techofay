@@ -25,9 +25,12 @@ export const CustomersPage: React.FC = () => {
   const { data: loadsResponse } = useLoads();
   const { data: biltiesResponse } = useBilties();
 
-  const customers: CustomerParty[] = customersResponse?.data || [];
-  const serverLoads = loadsResponse?.data || [];
-  const serverBilties = biltiesResponse?.data || [];
+  const rawCustomers = Array.isArray(customersResponse) ? customersResponse : (customersResponse as any)?.data || [];
+  const customers: CustomerParty[] = Array.isArray(rawCustomers) ? rawCustomers : [];
+  const rawLoads = Array.isArray(loadsResponse) ? loadsResponse : (loadsResponse as any)?.data || [];
+  const serverLoads = Array.isArray(rawLoads) ? rawLoads : [];
+  const rawBilties = Array.isArray(biltiesResponse) ? biltiesResponse : (biltiesResponse as any)?.data || [];
+  const serverBilties = Array.isArray(rawBilties) ? rawBilties : [];
 
   const [searchTerm, setSearchTerm] = useState('');
   const [drawerCustomer, setDrawerCustomer] = useState<CustomerParty | null>(null);

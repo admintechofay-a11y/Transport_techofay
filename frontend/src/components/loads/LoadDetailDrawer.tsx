@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   X,
   MapPin,
@@ -20,6 +21,7 @@ import {
   ExternalLink,
   ShieldCheck,
   Package,
+  CreditCard,
 } from 'lucide-react';
 import { Load } from '@/types/load.types';
 import { StatusBadge } from '@/components/shared/StatusBadge';
@@ -50,6 +52,7 @@ export const LoadDetailDrawer: React.FC<LoadDetailDrawerProps> = ({
   onGenerateLr,
   onCreateBilty,
 }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'overview' | 'goods' | 'docs' | 'freight' | 'stops' | 'timeline'>('overview');
   const [pdfPreviewType, setPdfPreviewType] = useState<'lr' | 'bilty' | 'challan' | null>(null);
   const [showWhatsApp, setShowWhatsApp] = useState(false);
@@ -194,6 +197,33 @@ export const LoadDetailDrawer: React.FC<LoadDetailDrawerProps> = ({
                 Create Bilty
               </button>
             )}
+
+            <button
+              onClick={() => navigate(`/delivery-challans?load_uuid=${load.uuid || load.id}`)}
+              className="px-2.5 py-1 rounded bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-semibold shadow-xs transition flex items-center gap-1"
+              title="Open Delivery Challan Console"
+            >
+              <Package className="w-3.5 h-3.5" />
+              Challan
+            </button>
+
+            <button
+              onClick={() => navigate(`/gate-passes?load_uuid=${load.uuid || load.id}`)}
+              className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold shadow-xs transition flex items-center gap-1"
+              title="Issue Gate Pass & Encrypted QR"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+              Gate Pass
+            </button>
+
+            <button
+              onClick={() => navigate(`/freight?load_uuid=${load.uuid || load.id}`)}
+              className="px-2.5 py-1 rounded bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold shadow-xs transition flex items-center gap-1"
+              title="Open Freight Billing & Settlement"
+            >
+              <IndianRupee className="w-3.5 h-3.5" />
+              Freight
+            </button>
           </div>
         </div>
 
@@ -546,10 +576,10 @@ export const LoadDetailDrawer: React.FC<LoadDetailDrawerProps> = ({
                     </div>
                   </div>
                   <button
-                    onClick={() => toast.info('Please drag and drop signed receiver copy')}
-                    className="px-3 py-1.5 rounded-lg bg-saffron-50 hover:bg-saffron-100 text-saffron-700 text-xs font-semibold transition"
+                    onClick={() => navigate(`/pod?load_uuid=${load.uuid || load.id}`)}
+                    className="px-3 py-1.5 rounded-lg bg-saffron-500 hover:bg-saffron-600 text-white text-xs font-semibold shadow-xs transition"
                   >
-                    Upload POD
+                    Upload & Verify POD
                   </button>
                 </div>
               </div>
@@ -592,6 +622,16 @@ export const LoadDetailDrawer: React.FC<LoadDetailDrawerProps> = ({
                       {formatINR(Math.max(0, (Number(load.total_freight) || 0) - (Number(load.advance_amount) || 0)))}
                     </span>
                   </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                  <button
+                    onClick={() => navigate(`/freight?load_uuid=${load.uuid || load.id}`)}
+                    className="px-3.5 py-1.5 rounded-lg bg-navy-800 hover:bg-navy-900 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition"
+                  >
+                    <CreditCard className="w-4 h-4 text-saffron-400" />
+                    Open Freight Ledger & Record Settlement
+                  </button>
                 </div>
               </div>
             </div>

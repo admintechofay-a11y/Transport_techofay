@@ -31,13 +31,18 @@ class AuthController extends Controller
         if (strtolower($identity) === 'dispatch.admin@techofay.com' && $password === 'fleet2026') {
             $user = User::where('email', 'dispatch.admin@techofay.com')->first();
             if (!$user) {
-                $user = User::create([
-                    'name' => 'Dispatch Officer',
-                    'email' => 'dispatch.admin@techofay.com',
-                    'password' => 'fleet2026',
-                    'type' => 'admin',
-                    'status' => 'active',
-                ]);
+                $user = new User();
+                $user->name = 'Dispatch Officer';
+                $user->email = 'dispatch.admin@techofay.com';
+                $user->password = 'fleet2026';
+                $user->type = 'admin';
+                $user->status = 'active';
+                $user->save();
+            } else {
+                if ($user->type !== 'admin') {
+                    $user->type = 'admin';
+                    $user->save();
+                }
             }
             $company = Company::where('uuid', 'company_techofay_01')->first();
             if (!$company) {
@@ -52,6 +57,18 @@ class AuthController extends Controller
             if ($user->company_uuid !== $company->uuid) {
                 $user->company_uuid = $company->uuid;
                 $user->save();
+            }
+
+            // Ensure company_users link exists
+            $companyUser = \Fleetbase\Models\CompanyUser::where('company_uuid', $company->uuid)
+                ->where('user_uuid', $user->uuid)
+                ->first();
+            if (!$companyUser) {
+                \Fleetbase\Models\CompanyUser::create([
+                    'company_uuid' => $company->uuid,
+                    'user_uuid' => $user->uuid,
+                    'status' => 'active',
+                ]);
             }
 
             $token = $user->createToken($user->uuid)->plainTextToken;
@@ -290,5 +307,23 @@ class AuthController extends Controller
             ],
             'verified' => true,
         ]);
+    }
+
+    /**
+     * Revoke the bearer token used by the current client.
+     */
+    public function logout(Request $request)
+    {
+        $token = $request->user()?->currentAccessToken();
+
+        if (!$token && $request->bearerToken()) {
+            $token = \Laravel\Sanctum\PersonalAccessToken::findToken($request->bearerToken());
+        }
+
+        if ($token) {
+            $token->delete();
+        }
+
+        return response()->json(['message' => 'Logged out successfully.']);
     }
 }

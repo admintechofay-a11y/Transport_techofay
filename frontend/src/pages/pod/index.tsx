@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Camera,
   CheckCircle2,
@@ -24,9 +25,13 @@ import { toast } from 'sonner';
 import { Load } from '@/types/load.types';
 
 export const PodManagementPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const urlLoadId = searchParams.get('load_uuid') || searchParams.get('order_uuid') || searchParams.get('load_id');
+
   const queryClient = useQueryClient();
   const { data: loadsResponse, isLoading } = useLoads();
-  const loads: Load[] = loadsResponse?.data || [];
+  const rawList = Array.isArray(loadsResponse) ? loadsResponse : (loadsResponse as any)?.data;
+  const loads: Load[] = Array.isArray(rawList) ? rawList : [];
 
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'verified'>('all');
@@ -82,6 +87,21 @@ export const PodManagementPage: React.FC = () => {
     setStampPreview(load.pod_url || null);
     setIsUploadOpen(true);
   };
+
+  useEffect(() => {
+    if (!urlLoadId || loads.length === 0) return;
+
+    const matched = loads.find(
+      (l) => l.uuid === urlLoadId || l.id === urlLoadId || l.load_number === urlLoadId
+    );
+    if (matched) {
+      setSelectedLoad(matched);
+      setSearchTerm(String(matched.load_number || matched.id || ''));
+      if (!isPodVerified(matched)) {
+        openUploadModal(matched);
+      }
+    }
+  }, [urlLoadId, loads]);
 
   const handleSavePod = (e: React.FormEvent) => {
     e.preventDefault();

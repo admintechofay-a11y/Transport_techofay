@@ -76,6 +76,7 @@ class NotificationDispatchTest extends TestCase
 
     protected function createTestTables(): void
     {
+        Schema::dropIfExists('transport_settings');
         Schema::dropIfExists('notifications');
         Schema::dropIfExists('freight_charges');
         Schema::dropIfExists('proofs');
@@ -157,6 +158,25 @@ class NotificationDispatchTest extends TestCase
             $table->text('data');
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
+        });
+
+        Schema::create('transport_settings', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('_key', 36)->nullable();
+            $table->string('uuid', 36)->unique()->nullable();
+            $table->string('public_id', 191)->nullable();
+            $table->string('company_uuid', 36)->unique();
+            $table->string('company_logo_url', 500)->nullable();
+            $table->string('gstin', 20)->nullable();
+            $table->text('company_address')->nullable();
+            $table->string('company_phone', 50)->nullable();
+            $table->string('company_email', 100)->nullable();
+            $table->text('pdf_terms_conditions')->nullable();
+            $table->string('signature_url', 500)->nullable();
+            $table->json('custom_pdf_fields')->nullable();
+            $table->json('whatsapp_settings')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 

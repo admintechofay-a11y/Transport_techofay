@@ -57,6 +57,31 @@ class LrNumber extends Model
         return $this->hasMany(LrStatusHistory::class, 'lr_uuid', 'uuid')->orderBy('created_at', 'asc');
     }
 
+    public function statusHistory(): HasMany
+    {
+        return $this->hasMany(LrStatusHistory::class, 'lr_uuid', 'uuid')->orderBy('created_at', 'asc');
+    }
+
+    public function statusHistories(): HasMany
+    {
+        return $this->statusHistory();
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(\Fleetbase\FleetOps\Models\Contact::class, 'customer_uuid', 'uuid');
+    }
+
+    public function consignor(): BelongsTo
+    {
+        return $this->belongsTo(\Fleetbase\FleetOps\Models\Contact::class, 'consignor_uuid', 'uuid');
+    }
+
+    public function consignee(): BelongsTo
+    {
+        return $this->belongsTo(\Fleetbase\FleetOps\Models\Contact::class, 'consignee_uuid', 'uuid');
+    }
+
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class, 'vehicle_uuid', 'uuid');

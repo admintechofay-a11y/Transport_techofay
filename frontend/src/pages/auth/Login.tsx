@@ -11,14 +11,12 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
-  Sparkles,
   UserPlus,
   Building2,
   Phone,
   MapPin,
   User,
   Play,
-  CheckCircle2,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { authApi } from '@/lib/api/auth.api';
@@ -73,19 +71,11 @@ export const LoginPage: React.FC = () => {
         password: values.password,
       });
 
-      const token = response.token;
-      const user = response.user || {
-        id: 1,
-        name: values.email.split('@')[0],
-        email: values.email,
-        role: response.type || 'dispatcher',
-      };
-      const company = response.company || {
-        uuid: 'company_techofay_01',
-        name: 'TECHOFAY GLOBAL VENTURES',
-      };
+      if (!response.user || !response.company) {
+        throw new Error('Login succeeded but the account context was incomplete. Please try again.');
+      }
 
-      setAuth(token, user, company);
+      setAuth(response.token, response.user, response.company);
       toast.success('Welcome back to Techofay Transport Operations!');
       navigate('/', { replace: true });
     } catch (err: any) {
@@ -113,23 +103,11 @@ export const LoginPage: React.FC = () => {
         company_name: regCompany || 'Techofay Global Logistics',
       });
 
-      const token = response.token;
-      const user = response.user || {
-        id: 1,
-        name: regName || 'Transport Manager',
-        email: regEmail,
-        role: response.type || 'admin',
-        phone: regPhone,
-      };
-      const company = response.company || {
-        uuid: 'comp_' + Date.now(),
-        name: regCompany || 'Techofay Global Logistics',
-        currency: 'INR',
-        gstin: regGstin,
-        address: regCity,
-      };
+      if (!response.user || !response.company) {
+        throw new Error('Registration succeeded but the account context was incomplete. Please try again.');
+      }
 
-      setAuth(token, user, company);
+      setAuth(response.token, response.user, response.company);
       toast.success(`Registration successful! Welcome, ${regName || 'Manager'}. Your transport console is ready.`);
       navigate('/', { replace: true });
     } catch (err: any) {
@@ -287,7 +265,8 @@ export const LoginPage: React.FC = () => {
                   <div className="relative">
                     <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
-                      type="email"
+                      type="text"
+                      inputMode="email"
                       {...register('email')}
                       className="w-full pl-9 pr-3 py-2.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-saffron-500 focus:border-saffron-500 transition"
                       placeholder="dispatch.admin@techofay.com"

@@ -166,14 +166,9 @@ class Bilty extends Model
         return $this->belongsTo(LrNumber::class, 'lr_uuid', 'uuid');
     }
 
-    public function load(): BelongsTo
-    {
-        return $this->belongsTo(Order::class, 'load_uuid', 'uuid');
-    }
-
     public function order(): BelongsTo
     {
-        return $this->load();
+        return $this->belongsTo(Order::class, 'load_uuid', 'uuid');
     }
 
     public function vehicle(): BelongsTo

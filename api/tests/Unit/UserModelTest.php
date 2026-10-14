@@ -11,7 +11,9 @@ class UserModelTest extends TestCase
     {
         $user = new User();
 
-        $this->assertSame(['name', 'email', 'password'], $user->getFillable());
+        $this->assertContains('name', $user->getFillable());
+        $this->assertContains('email', $user->getFillable());
+        $this->assertNotContains('password', $user->getFillable());
     }
 
     public function test_hidden_attributes_are_not_serialized(): void

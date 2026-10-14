@@ -89,13 +89,19 @@
         </thead>
         <tbody>
             @if(!empty($bilty->material_details))
-                @foreach($bilty->material_details as $i => $item)
+                @php
+                    $materials = is_array($bilty->material_details) ? $bilty->material_details : json_decode($bilty->material_details, true);
+                    if (is_array($materials) && !isset($materials[0])) {
+                        $materials = [$materials];
+                    }
+                @endphp
+                @foreach($materials as $item)
                 <tr>
-                    <td>{{ $i + 1 }}</td>
-                    <td>{{ $item['material'] ?? ($item['description'] ?? 'General Cargo') }}</td>
-                    <td>{{ $item['quantity'] ?? '-' }} {{ $item['unit'] ?? '' }}</td>
-                    <td>{{ $item['weight'] ?? '-' }}</td>
-                    <td>{{ isset($item['rate']) ? '₹ ' . number_format($item['rate'], 2) : '-' }}</td>
+                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $item['material'] ?? ($item['item'] ?? ($item['description'] ?? 'General Cargo')) }}</td>
+                    <td>{{ $item['quantity'] ?? '-' }} {{ $item['unit'] ?? ($item['package_type'] ?? '') }}</td>
+                    <td>{{ $item['weight'] ?? ($bilty->total_weight ?? '-') }}</td>
+                    <td>{{ isset($item['rate']) ? '₹ ' . number_format((float) $item['rate'], 2) : '-' }}</td>
                 </tr>
                 @endforeach
             @else

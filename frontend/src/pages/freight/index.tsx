@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   IndianRupee,
@@ -34,6 +34,7 @@ export const FreightPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'charges';
+  const urlLoadId = searchParams.get('load_uuid') || searchParams.get('load_id');
 
   const { data: serverCharges, isLoading } = useFreightCharges();
   const updateFreightMutation = useUpdateFreightCharge();
@@ -43,6 +44,7 @@ export const FreightPage: React.FC = () => {
     ? rawList.map((c: any) => ({
         ...c,
         id: c.uuid || c.id,
+        load_uuid: c.load_uuid || c.order_uuid || c.order?.uuid || c.order?.id || '',
         total_freight: Number(c.total_charges || c.total_freight || c.freight_amount || 0),
         advance_received: Number(c.advance_paid || c.advance_received || 0),
         balance_payable: Number(c.balance_payable ?? Math.max(0, (c.total_charges || c.total_freight || 0) - (c.advance_paid || c.advance_received || 0))),
@@ -53,6 +55,12 @@ export const FreightPage: React.FC = () => {
     : [];
 
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    if (urlLoadId) {
+      setSearchTerm(urlLoadId);
+    }
+  }, [urlLoadId]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [paymentModalCharge, setPaymentModalCharge] = useState<FreightCharge | null>(null);
   const [receivedAmount, setReceivedAmount] = useState<string>('');

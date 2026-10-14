@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Internal\v1;
 use App\Models\FreightCharge;
 use App\Services\BillingEngineService;
 use Fleetbase\FleetOps\Http\Controllers\FleetOpsController;
-use Fleetbase\FleetOps\Services\PdfGenerationService;
+use App\Services\PdfGenerationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

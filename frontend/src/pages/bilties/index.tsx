@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Printer,
   Download,
@@ -13,6 +14,7 @@ import {
   ChevronRight,
   ShieldCheck,
   X,
+  Package,
 } from 'lucide-react';
 import { useBilties, useCreateBilty } from '@/hooks/use-bilties';
 import { useLoads } from '@/hooks/use-loads';
@@ -27,6 +29,10 @@ import { downloadBiltyPdf } from '@/lib/pdf-downloader';
 import { toast } from 'sonner';
 
 export const BiltiesPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const urlLoadId = searchParams.get('load_uuid') || searchParams.get('load_id');
+
   const { data: serverLoads } = useLoads();
   const availableLoads = Array.isArray(serverLoads) ? serverLoads : ((serverLoads as any)?.data || []);
 
@@ -42,6 +48,24 @@ export const BiltiesPage: React.FC = () => {
   const [whatsAppBilty, setWhatsAppBilty] = useState<Bilty | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeCopyTab, setActiveCopyTab] = useState<'consignee' | 'consignor' | 'driver' | 'transporter'>('consignee');
+
+  useEffect(() => {
+    if (!urlLoadId) return;
+
+    const existingBilty = bilties.find(
+      (b: any) =>
+        b.load_uuid === urlLoadId ||
+        b.load?.uuid === urlLoadId ||
+        b.load_id === urlLoadId
+    );
+    if (existingBilty) {
+      setSelectedBilty(existingBilty);
+      setSearchTerm(existingBilty.bilty_number);
+    } else {
+      setSelectedLoadId(urlLoadId);
+      setIsCreateModalOpen(true);
+    }
+  }, [urlLoadId, bilties]);
 
   const handleIssueBilty = async () => {
     const selectedL = availableLoads.find((l: any) => l.id === selectedLoadId || l.load_number === selectedLoadId || l.uuid === selectedLoadId) || availableLoads[0];
@@ -417,6 +441,36 @@ export const BiltiesPage: React.FC = () => {
                   <span className="font-mono text-saffron-600 dark:text-saffron-400">
                     {formatINR(selectedBilty.balance_amount || 0)}
                   </span>
+                </div>
+              </div>
+
+              {/* Connected Transport Operations */}
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                  Connected Consignment Flows
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button
+                    onClick={() => navigate(`/gate-passes?load_uuid=${(selectedBilty as any).load_uuid || (selectedBilty as any).load?.uuid || (selectedBilty as any).load_id}`)}
+                    className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                    Gate Pass
+                  </button>
+                  <button
+                    onClick={() => navigate(`/delivery-challans?load_uuid=${(selectedBilty as any).load_uuid || (selectedBilty as any).load?.uuid || (selectedBilty as any).load_id}`)}
+                    className="p-2.5 rounded-lg border border-purple-200 dark:border-purple-900 bg-purple-50/60 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 hover:bg-purple-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+                  >
+                    <Package className="w-3.5 h-3.5" />
+                    Challan
+                  </button>
+                  <button
+                    onClick={() => navigate(`/freight?load_uuid=${(selectedBilty as any).load_uuid || (selectedBilty as any).load?.uuid || (selectedBilty as any).load_id}`)}
+                    className="p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-900 bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+                  >
+                    <IndianRupee className="w-3.5 h-3.5" />
+                    Freight
+                  </button>
                 </div>
               </div>
             </div>

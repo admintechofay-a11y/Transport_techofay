@@ -3,6 +3,10 @@
 namespace App\Models;
 
 use App\Traits\BelongsToCompany;
+use Fleetbase\FleetOps\Models\Contact;
+use Fleetbase\FleetOps\Models\Driver;
+use Fleetbase\FleetOps\Models\Order;
+use Fleetbase\FleetOps\Models\Vehicle;
 use Fleetbase\Models\Model;
 use Fleetbase\Traits\HasPublicId;
 use Fleetbase\Traits\HasUuid;
@@ -75,5 +79,25 @@ class Bilty extends Model
     public function driver(): BelongsTo
     {
         return $this->belongsTo(Driver::class, 'driver_uuid', 'uuid');
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class, 'customer_uuid', 'uuid');
+    }
+
+    public function consignor(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class, 'consignor_uuid', 'uuid');
+    }
+
+    public function consignee(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class, 'consignee_uuid', 'uuid');
+    }
+
+    public function deliveryChallans()
+    {
+        return $this->hasMany(DeliveryChallan::class, 'load_uuid', 'load_uuid');
     }
 }

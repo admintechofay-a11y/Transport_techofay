@@ -101,6 +101,7 @@ export const LoadFormModal: React.FC<LoadFormModalProps> = ({
     register,
     control,
     handleSubmit,
+    setFocus,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<any>({
@@ -135,6 +136,7 @@ export const LoadFormModal: React.FC<LoadFormModalProps> = ({
 
   const watchedBaseRate = watch('base_rate') || 0;
   const watchedAdvance = watch('advance_amount') || 0;
+  const watchedDriver = watch('driver_uuid');
   const watchedItems = watch('items') || [];
   const totalWeight = watchedItems.reduce((acc: number, curr: any) => acc + (Number(curr.weight) || 0), 0);
   const totalFreight = watchedBaseRate * (totalWeight > 0 ? totalWeight : 1);
@@ -144,9 +146,7 @@ export const LoadFormModal: React.FC<LoadFormModalProps> = ({
 
   const onFormSubmit = async (values: any) => {
     try {
-      const assignedPlate = values.vehicle_uuid || (availableVehicles[0]?.plate_number || 'TBD');
-      const assignedDriver = values.driver_uuid || (availableDrivers[0]?.name || 'Assigned Driver');
-
+      const shouldDispatch = Boolean(values.driver_uuid);
       const payload: any = {
         load_type: values.load_type || 'FTL',
         service_type: values.service_type || 'Standard',
@@ -165,22 +165,38 @@ export const LoadFormModal: React.FC<LoadFormModalProps> = ({
         },
         origin_location: { name: values.origin_city || 'Origin Hub', address: values.consignor_address },
         destination_location: { name: values.destination_city || 'Destination Hub', address: values.consignee_address },
-        vehicle: { plate_number: assignedPlate },
-        driver: { name: assignedDriver, phone: values.consignor_phone || '' },
+        vehicle_uuid: values.vehicle_uuid || undefined,
+        driver_uuid: values.driver_uuid || undefined,
         total_freight: totalFreight,
         advance_amount: Number(values.advance_amount) || 0,
         balance_amount: balancePayable,
         eway_bill_number: values.items?.[0]?.eway_bill_number || '',
         items: values.items || [],
-        status: 'pending',
+        status: 'created',
+        dispatch: shouldDispatch,
+        dispatched: shouldDispatch,
       };
 
       const created = await createLoadMutation.mutateAsync(payload);
       onSubmitSuccess?.(created);
       onClose();
-    } catch (err: any) {
-      toast.error('Failed to create load. Please check inputs.');
+    } catch {
+      // The API client displays the actionable validation or connectivity error.
     }
+  };
+
+  const onFormInvalid = (formErrors: Record<string, any>) => {
+    const firstField = Object.keys(formErrors)[0];
+    if (firstField) {
+      setFocus(firstField as any);
+    }
+
+    const firstMessage = firstField ? formErrors[firstField]?.message : undefined;
+    toast.error(
+      firstMessage
+        ? String(firstMessage)
+        : 'Please complete all required fields before creating the consignment.'
+    );
   };
 
   return (
@@ -206,7 +222,7 @@ export const LoadFormModal: React.FC<LoadFormModalProps> = ({
         </div>
 
         {/* Modal Form Scrollable Body */}
-        <form onSubmit={handleSubmit(onFormSubmit)} className="flex-1 overflow-y-auto p-6 space-y-6">
+        <form onSubmit={handleSubmit(onFormSubmit, onFormInvalid)} className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Section 1: Basic Load Info */}
           <FormSection
             title="1. Load Classification"
@@ -553,7 +569,7 @@ export const LoadFormModal: React.FC<LoadFormModalProps> = ({
                 >
                   <option value="">-- Select Available Truck --</option>
                   {availableVehicles.map((v: any) => (
-                    <option key={v.id || v.plate_number} value={v.plate_number}>
+                    <option key={v.uuid || v.public_id || v.id || v.plate_number} value={v.uuid || ''}>
                       {v.plate_number} ({v.make || 'Truck'} - {v.capacity_tonnage || 25}T)
                     </option>
                   ))}
@@ -570,7 +586,7 @@ export const LoadFormModal: React.FC<LoadFormModalProps> = ({
                 >
                   <option value="">-- Select Available Driver --</option>
                   {availableDrivers.map((d: any) => (
-                    <option key={d.id || d.name} value={d.name}>
+                    <option key={d.uuid || d.public_id || d.id || d.name} value={d.uuid || ''}>
                       {d.name} ({d.phone || 'Driver'})
                     </option>
                   ))}
@@ -720,7 +736,7 @@ export const LoadFormModal: React.FC<LoadFormModalProps> = ({
               className="px-6 py-2.5 text-xs font-bold text-white bg-saffron-500 hover:bg-saffron-600 active:scale-95 rounded-lg shadow-md shadow-saffron-500/20 transition flex items-center gap-1.5"
             >
               <Check className="w-4 h-4" />
-              Create & Dispatch Consignment
+              {watchedDriver ? 'Create & Dispatch Consignment' : 'Create Consignment'}
             </button>
           </div>
         </form>

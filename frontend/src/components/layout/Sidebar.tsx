@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { useUIStore } from '@/stores/ui.store';
 import { useAuthStore } from '@/stores/auth.store';
+import { authApi } from '@/lib/api/auth.api';
 import { useDashboardMetrics } from '@/hooks/use-dashboard';
 import { cn } from '@/lib/utils';
 
@@ -58,7 +59,8 @@ export const Sidebar: React.FC = () => {
     return false;
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await authApi.logout();
     logout();
     navigate('/login');
   };
